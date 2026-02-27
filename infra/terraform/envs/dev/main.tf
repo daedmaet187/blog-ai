@@ -3,7 +3,7 @@ terraform {
 
   required_providers {
     aws = {
-      source  = "hashicorp/aws"
+      source  = "registry.opentofu.org/hashicorp/aws"
       version = "~> 5.0"
     }
   }
@@ -17,6 +17,9 @@ locals {
   project = "blog-mission-control"
   env     = "dev"
   name    = "${local.project}-${local.env}"
+
+  db_url    = "postgresql://${var.db_username}:${var.db_password}@${module.db.db_endpoint}:5432/${var.db_name}"
+  redis_url = "redis://${module.redis.redis_endpoint}:6379"
 
   tags = {
     Project     = local.project
@@ -52,7 +55,12 @@ module "ecs_api" {
   container_port     = 8000
   image_uri          = "${aws_ecr_repository.api.repository_url}:latest"
   aws_region         = var.aws_region
-  tags               = local.tags
+  environment        = { APP_ENV = "dev" }
+  secrets            = {
+    DATABASE_URL = aws_ssm_parameter.database_url.arn
+    REDIS_URL    = aws_ssm_parameter.redis_url.arn
+  }
+  tags = local.tags
 }
 
 module "db" {
@@ -60,7 +68,7 @@ module "db" {
   name               = local.name
   vpc_id             = module.network.vpc_id
   private_subnet_ids = module.network.private_subnet_ids
-  app_sg_id          = module.ecs_api.ecs_service_sg_id
+  app_cidr           = var.vpc_cidr
   instance_class     = var.db_instance_class
   db_name            = var.db_name
   db_username        = var.db_username
@@ -73,7 +81,23 @@ module "redis" {
   name               = local.name
   vpc_id             = module.network.vpc_id
   private_subnet_ids = module.network.private_subnet_ids
-  app_sg_id          = module.ecs_api.ecs_service_sg_id
+  app_cidr           = var.vpc_cidr
   node_type          = var.redis_node_type
   tags               = local.tags
+}
+
+resource "aws_ssm_parameter" "database_url" {
+  name      = "/${local.name}/DATABASE_URL"
+  type      = "SecureString"
+  value     = local.db_url
+  overwrite = true
+  tags      = local.tags
+}
+
+resource "aws_ssm_parameter" "redis_url" {
+  name      = "/${local.name}/REDIS_URL"
+  type      = "SecureString"
+  value     = local.redis_url
+  overwrite = true
+  tags      = local.tags
 }

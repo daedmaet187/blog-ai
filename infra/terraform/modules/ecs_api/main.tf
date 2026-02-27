@@ -1,3 +1,8 @@
+locals {
+  env_list = [for k, v in var.environment : { name = k, value = v }]
+  secret_list = [for k, v in var.secrets : { name = k, valueFrom = v }]
+}
+
 resource "aws_cloudwatch_log_group" "api" {
   name              = "/ecs/${var.name}-api"
   retention_in_days = 14
@@ -109,6 +114,27 @@ resource "aws_iam_role_policy_attachment" "task_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+resource "aws_iam_role_policy" "task_execution_ssm" {
+  name = "${var.name}-task-execution-ssm"
+  role = aws_iam_role.task_execution.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = ["ssm:GetParameters", "ssm:GetParameter"],
+        Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = ["kms:Decrypt"],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 resource "aws_ecs_task_definition" "api" {
   family                   = "${var.name}-api"
   network_mode             = "awsvpc"
@@ -136,7 +162,9 @@ resource "aws_ecs_task_definition" "api" {
           awslogs-region        = var.aws_region,
           awslogs-stream-prefix = "ecs"
         }
-      }
+      },
+      environment = local.env_list,
+      secrets     = local.secret_list
     }
   ])
 

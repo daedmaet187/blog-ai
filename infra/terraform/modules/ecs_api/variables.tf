@@ -6,4 +6,13 @@ variable "private_subnet_ids" { type = list(string) }
 variable "container_port" { type = number }
 variable "image_uri" { type = string }
 variable "aws_region" { type = string }
+variable "environment" {
+  type    = map(string)
+  default = {}
+}
+
+variable "secrets" {
+  type    = map(string)
+  default = {}
+}
 variable "tags" { type = map(string) }

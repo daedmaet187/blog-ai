@@ -9,10 +9,10 @@ resource "aws_security_group" "db" {
   vpc_id = var.vpc_id
 
   ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [var.app_sg_id]
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = [var.app_cidr]
   }
 
   egress {
@@ -28,7 +28,7 @@ resource "aws_security_group" "db" {
 resource "aws_db_instance" "this" {
   identifier             = "${var.name}-postgres"
   engine                 = "postgres"
-  engine_version         = "16.3"
+  # engine_version omitted to use region default supported version
   instance_class         = var.instance_class
   allocated_storage      = 20
   username               = var.db_username
