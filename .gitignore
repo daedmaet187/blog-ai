@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+
+# Terraform/OpenTofu local artifacts
+**/.terraform/*
+**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfplan
+*.bak.*
+*.lock.info
+*.db_password_generated.txt
+
+# OS
+.DS_Store
