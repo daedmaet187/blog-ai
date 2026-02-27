@@ -3,11 +3,12 @@ name: API Deploy Dev
 on:
   workflow_dispatch:
   push:
-    branches: ["main"]
+    branches:
+      - main
     paths:
-      - "services/api/**"
-      - "infra/terraform/**"
-      - ".github/workflows/api-deploy-dev.yml"
+      - services/api/**
+      - infra/terraform/**
+      - .github/workflows/api-deploy-dev.yml
 
 env:
   AWS_REGION: eu-central-1
@@ -19,13 +20,13 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     permissions:
       id-token: write
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -42,21 +43,21 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG services/api
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
+          docker build -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" services/api
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> "$GITHUB_ENV"
 
       - name: Fetch current task definition
         run: |
           TASK_DEF_ARN=$(aws ecs describe-services \
             --cluster "$ECS_CLUSTER" \
             --services "$ECS_SERVICE" \
-            --query "services[0].taskDefinition" \
+            --query 'services[0].taskDefinition' \
             --output text)
 
           aws ecs describe-task-definition \
             --task-definition "$TASK_DEF_ARN" \
-            --query taskDefinition > task-definition.json
+            --query 'taskDefinition' > task-definition.json
 
       - name: Render new task definition
         id: task-def
@@ -75,5 +76,4 @@ jobs:
           wait-for-service-stability: true
 
       - name: Deployment note
-        run: |
-          echo "Deployed image: $IMAGE_URI"
+        run: echo "Deployed image: $IMAGE_URI"
