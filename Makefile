@@ -1,4 +1,4 @@
-.PHONY: api-run api-docker-build tf-init tf-plan tf-apply
+.PHONY: api-run api-docker-build tofu-init tofu-plan tofu-apply
 
 api-run:
 	cd services/api && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
@@ -6,11 +6,11 @@ api-run:
 api-docker-build:
 	docker build -t blog-api:local services/api
 
-tf-init:
-	cd infra/terraform/envs/dev && terraform init
+tofu-init:
+	cd infra/terraform/envs/dev && tofu init
 
-tf-plan:
-	cd infra/terraform/envs/dev && terraform plan
+tofu-plan:
+	cd infra/terraform/envs/dev && tofu plan
 
-tf-apply:
-	cd infra/terraform/envs/dev && terraform apply
+tofu-apply:
+	cd infra/terraform/envs/dev && tofu apply

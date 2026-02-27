@@ -5,11 +5,11 @@
 - Add repo secret: `AWS_GITHUB_ROLE_ARN`.
 - Configure OIDC IAM role trust for GitHub Actions.
 
-## 2) Terraform apply (dev)
+## 2) OpenTofu apply (dev)
 - `cd infra/terraform/envs/dev`
 - `cp terraform.tfvars.example terraform.tfvars`
 - set strong `db_password`
-- `terraform init && terraform apply`
+- `tofu init && tofu apply`
 
 ## 3) Build + push first API image
 - Trigger `API Deploy Dev` workflow (or push to main).

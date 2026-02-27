@@ -1,13 +1,13 @@
 # Terraform (AWS)
 
-## Dev bootstrap
+## Dev bootstrap (OpenTofu)
 ```bash
 cd infra/terraform/envs/dev
 cp terraform.tfvars.example terraform.tfvars
 # edit terraform.tfvars (db_password)
-terraform init
-terraform plan
-terraform apply
+tofu init
+tofu plan
+tofu apply
 ```
 
 ## Notes

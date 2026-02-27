@@ -6,7 +6,7 @@ Monorepo for:
 - Admin dashboard
 - Backend API
 - Shared packages
-- AWS infrastructure (Terraform)
+- AWS infrastructure (OpenTofu)
 
 ## Architecture (v1)
 - Compute: ECS Fargate
