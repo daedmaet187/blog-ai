@@ -32,6 +32,13 @@
       const API = 'https://api.stuff187.com';
       const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#039;');
       const fmt = d => { try { return new Date(d).toLocaleString(); } catch { return d || ''; } };
+      const stripMd = s => String(s || '')
+        .replace(/```[\s\S]*?```/g, ' ')
+        .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+        .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+        .replace(/[#>*_`-]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
 
       async function load(){
         const status=document.getElementById('status'); const list=document.getElementById('list');
@@ -44,7 +51,7 @@
             <article class="post">
               <h2><a href="./post.html?slug=${encodeURIComponent(p.slug)}">${esc(p.title)}</a></h2>
               <div class="muted">Updated: ${esc(fmt(p.updated_at || p.created_at))}</div>
-              <p>${esc((p.content||'').slice(0,220))}${(p.content||'').length>220?'...':''}</p>
+              <p>${esc(stripMd(p.content).slice(0,220))}${stripMd(p.content).length>220?'...':''}</p>
               <a href="./post.html?slug=${encodeURIComponent(p.slug)}">Read more →</a>
             </article>
           `).join('');

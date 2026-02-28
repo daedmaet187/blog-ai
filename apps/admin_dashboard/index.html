@@ -15,6 +15,14 @@
       label{font-size:12px;color:var(--muted);display:block;margin-top:8px}
       input,textarea,select,button{width:100%;border-radius:10px;border:1px solid var(--line);background:#0f1730;color:var(--text);padding:10px 12px;margin-top:6px}
       textarea{min-height:170px;resize:vertical}
+      .editor-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+      .editor-tools input{flex:1;min-width:220px;margin-top:0}
+      .editor-tools button{width:auto;margin-top:0}
+      .preview{margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#0f1730;line-height:1.65}
+      .preview img{max-width:100%;border-radius:8px}
+      .preview code{background:#1f2b52;padding:2px 6px;border-radius:6px}
+      .preview pre{overflow:auto;background:#0b1228;padding:10px;border-radius:8px}
+      .preview blockquote{border-left:3px solid var(--acc);margin:8px 0;padding-left:10px;color:var(--muted)}
       .inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
       .inline button{width:auto;cursor:pointer}
       .primary{background:var(--acc);color:#0b1020;border:none;font-weight:700}
@@ -56,7 +64,13 @@
           <p class="muted" id="editorMode">Mode: Create new draft</p>
           <label>Title</label><input id="title" placeholder="My great post" />
           <label>Slug (kebab-case)</label><input id="slug" placeholder="my-great-post" />
-          <label>Content</label><textarea id="content" placeholder="Write your post..."></textarea>
+          <label>Content (Markdown supported)</label><textarea id="content" placeholder="Write your post..."></textarea>
+          <div class="editor-tools">
+            <input id="imageUrl" placeholder="https://... image URL" />
+            <button id="insertImageBtn" class="ghost">Insert Image</button>
+            <button id="previewBtn" class="ghost">Toggle Preview</button>
+          </div>
+          <div id="preview" class="preview" style="display:none"></div>
           <div class="inline" style="margin-top:10px">
             <button id="saveBtn" class="primary">Create Draft</button>
             <button id="publishBtn" class="ghost">Save & Publish</button>
@@ -102,6 +116,27 @@
       const slugify = (s='') => s.toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-');
       const fmtErr = (d,s)=> typeof d?.detail==='string' ? d.detail : Array.isArray(d?.detail) ? d.detail.map(x=>x.msg).join('; ') : `HTTP ${s}`;
       const dt = d => { try { return new Date(d).toLocaleString(); } catch { return d || '' }};
+      const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#039;');
+
+      function renderMarkdown(md='') {
+        let html = esc(md);
+        html = html.replace(/^###\s+(.*)$/gm, '<h3>$1</h3>')
+                   .replace(/^##\s+(.*)$/gm, '<h2>$1</h2>')
+                   .replace(/^#\s+(.*)$/gm, '<h1>$1</h1>');
+        html = html.replace(/^>\s+(.*)$/gm, '<blockquote>$1</blockquote>');
+        html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+        html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+        html = html.replace(/!\[([^\]]*)\]\((https?:[^\s)]+)\)/g, '<img alt="$1" src="$2" />');
+        html = html.replace(/\[([^\]]+)\]\((https?:[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+        html = html.replace(/\n\n/g, '</p><p>');
+        return `<p>${html}</p>`;
+      }
+
+      function refreshPreview() {
+        $('preview').innerHTML = renderMarkdown($('content').value || '_Nothing to preview yet_');
+      }
 
       function toast(text, ok=true){ const t=$('toast'); t.textContent=text; t.style.borderColor=ok?'#2f6f4c':'#7a3047'; t.className='toast show'; setTimeout(()=>t.className='toast', 2200); }
       function setMsg(id,text,ok=true){ const el=$(id); el.textContent=text; el.className=ok?'ok':'err'; }
@@ -119,11 +154,27 @@
         editingId = null;
         $('editorMode').textContent = 'Mode: Create new draft';
         $('saveBtn').textContent = 'Create Draft';
-        $('title').value=''; $('slug').value=''; $('content').value='';
+        $('title').value=''; $('slug').value=''; $('content').value=''; $('imageUrl').value='';
+        $('preview').style.display = 'none';
+        $('preview').innerHTML = '';
         setMsg('editorMsg','');
       }
 
       $('title').addEventListener('input', e => { if (!$('slug').value.trim()) $('slug').value = slugify(e.target.value); });
+      $('content').addEventListener('input', () => { if ($('preview').style.display !== 'none') refreshPreview(); });
+      $('previewBtn').onclick = () => {
+        const p = $('preview');
+        p.style.display = p.style.display === 'none' ? 'block' : 'none';
+        if (p.style.display === 'block') refreshPreview();
+      };
+      $('insertImageBtn').onclick = () => {
+        const url = $('imageUrl').value.trim();
+        if (!/^https?:\/\//.test(url)) return toast('Use full image URL (http/https)', false);
+        const md = `\n\n![image](${url})\n`;
+        $('content').value += md;
+        $('imageUrl').value = '';
+        if ($('preview').style.display !== 'none') refreshPreview();
+      };
 
       $('loginBtn').onclick = async () => {
         try {
@@ -199,6 +250,7 @@
         $('editorMode').textContent = `Mode: Editing #${p.id}`;
         $('saveBtn').textContent = 'Save Changes';
         $('title').value = p.title; $('slug').value = p.slug; $('content').value = p.content || '';
+        if ($('preview').style.display !== 'none') refreshPreview();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
@@ -235,7 +287,7 @@
         }
       }
 
-      function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#039;'); }
+      function escapeHtml(s){ return esc(s); }
 
       $('rows').addEventListener('click', (e) => {
         const btn = e.target.closest('button[data-action]');

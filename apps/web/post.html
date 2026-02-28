@@ -15,7 +15,11 @@
       .muted { color: var(--muted); }
       .error { color:#ff6b6b; }
       h1 { margin: 0 0 8px; font-size: 34px; line-height:1.2; }
-      .content { white-space: pre-wrap; line-height: 1.75; font-size: 17px; margin-top: 16px; }
+      .content { line-height: 1.75; font-size: 17px; margin-top: 16px; }
+      .content img { max-width: 100%; border-radius: 10px; }
+      .content code { background:#1f2b52; padding:2px 6px; border-radius:6px; }
+      .content pre { overflow:auto; background:#0b1228; padding:12px; border-radius:10px; }
+      .content blockquote { border-left:3px solid var(--acc); margin:10px 0; padding-left:12px; color:var(--muted); }
       .toplink { margin-bottom: 14px; display:inline-block; }
     </style>
   </head>
@@ -35,6 +39,24 @@
       const params = new URLSearchParams(location.search);
       const slug = params.get("slug");
 
+      const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#039;');
+
+      function renderMarkdown(md='') {
+        let html = esc(md);
+        html = html.replace(/^###\s+(.*)$/gm, '<h3>$1</h3>')
+                   .replace(/^##\s+(.*)$/gm, '<h2>$1</h2>')
+                   .replace(/^#\s+(.*)$/gm, '<h1>$1</h1>');
+        html = html.replace(/^>\s+(.*)$/gm, '<blockquote>$1</blockquote>');
+        html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+        html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+        html = html.replace(/!\[([^\]]*)\]\((https?:[^\s)]+)\)/g, '<img alt="$1" src="$2" />');
+        html = html.replace(/\[([^\]]+)\]\((https?:[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+        html = html.replace(/\n\n/g, '</p><p>');
+        return `<p>${html}</p>`;
+      }
+
       async function load() {
         const title = document.getElementById("title");
         const meta = document.getElementById("meta");
@@ -53,7 +75,7 @@
           title.textContent = p.title;
           const dt = p.updated_at || p.created_at;
           meta.textContent = `Post #${p.id} • ${p.status} • ${new Date(dt).toLocaleString()}`;
-          content.textContent = p.content;
+          content.innerHTML = renderMarkdown(p.content || '');
           document.title = `${p.title} · stuff187.com`;
         } catch (e) {
           err.textContent = `Failed to load post: ${e.message}`;
