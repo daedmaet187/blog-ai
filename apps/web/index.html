@@ -1,62 +1,58 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>stuff187.com - Blog</title>
+    <title>stuff187.com · Blog</title>
     <style>
-      body { font-family: Arial, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; }
-      .post { border: 1px solid #ddd; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
-      a { color: #0b57d0; text-decoration: none; }
-      a:hover { text-decoration: underline; }
-      .muted { color: #666; font-size: 0.9rem; }
-      .error { color: #b00020; }
+      :root { --bg:#0b1020; --card:#141b31; --text:#e9eefc; --muted:#9fb0da; --line:#2b3960; --acc:#8aa6ff; }
+      * { box-sizing:border-box; }
+      body { margin:0; background: radial-gradient(1200px 700px at 0% -10%, #1b2550 0%, var(--bg) 50%); color:var(--text); font-family:Inter,system-ui,Arial,sans-serif; }
+      .wrap { max-width: 880px; margin: 28px auto; padding: 0 16px; }
+      .top { display:flex; justify-content:space-between; align-items:end; }
+      .muted { color: var(--muted); }
+      .post { border:1px solid var(--line); border-radius:14px; background:var(--card); padding:14px; margin:12px 0; }
+      h1 { margin:0; font-size:32px; }
+      h2 { margin:0 0 6px; }
+      a { color: var(--acc); text-decoration:none; }
+      a:hover { text-decoration:underline; }
+      .error { color:#ff6b6b; }
     </style>
   </head>
   <body>
-    <h1>Blog</h1>
-    <p class="muted">Powered by Mission Control</p>
-    <div id="status" class="muted">Loading posts...</div>
-    <div id="list"></div>
-
+    <div class="wrap">
+      <div class="top">
+        <h1>Blog</h1>
+        <div class="muted">Powered by Mission Control</div>
+      </div>
+      <p id="status" class="muted">Loading posts...</p>
+      <div id="list"></div>
+    </div>
     <script>
-      const API_BASE = "https://api.stuff187.com";
+      const API = 'https://api.stuff187.com';
+      const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#039;');
+      const fmt = d => { try { return new Date(d).toLocaleString(); } catch { return d || ''; } };
 
-      function escapeHtml(s) {
-        return String(s)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/\"/g, "&quot;")
-          .replace(/'/g, "&#039;");
-      }
-
-      function fmtDate(iso) {
-        try { return new Date(iso).toLocaleString(); } catch { return iso || ''; }
-      }
-
-      async function loadPosts() {
-        const status = document.getElementById("status");
-        const list = document.getElementById("list");
+      async function load(){
+        const status=document.getElementById('status'); const list=document.getElementById('list');
         try {
-          const res = await fetch(`${API_BASE}/posts?skip=0&limit=20`);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const res = await fetch(`${API}/posts?skip=0&limit=20`);
+          if(!res.ok) throw new Error(`HTTP ${res.status}`);
           const posts = await res.json();
           status.textContent = `${posts.length} published post(s)`;
           list.innerHTML = posts.map(p => `
             <article class="post">
-              <h2><a href="./post.html?slug=${encodeURIComponent(p.slug)}">${escapeHtml(p.title)}</a></h2>
-              <p class="muted">Published: ${escapeHtml(fmtDate(p.updated_at || p.created_at))}</p>
-              <p>${escapeHtml((p.content || '').slice(0, 180))}${(p.content || '').length > 180 ? '...' : ''}</p>
+              <h2><a href="./post.html?slug=${encodeURIComponent(p.slug)}">${esc(p.title)}</a></h2>
+              <div class="muted">Updated: ${esc(fmt(p.updated_at || p.created_at))}</div>
+              <p>${esc((p.content||'').slice(0,220))}${(p.content||'').length>220?'...':''}</p>
               <a href="./post.html?slug=${encodeURIComponent(p.slug)}">Read more →</a>
             </article>
-          `).join("");
-        } catch (e) {
-          status.innerHTML = `<span class="error">Failed to load posts: ${escapeHtml(e.message)}</span>`;
+          `).join('');
+        } catch(e){
+          status.innerHTML = `<span class="error">Failed to load posts: ${esc(e.message)}</span>`;
         }
       }
-
-      loadPosts();
+      load();
     </script>
   </body>
 </html>
