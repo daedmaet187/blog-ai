@@ -1,38 +1,39 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Post</title>
+    <title>Post · stuff187.com</title>
     <style>
-      body { font-family: Arial, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; }
-      a { color: #0b57d0; text-decoration: none; }
-      a:hover { text-decoration: underline; }
-      .muted { color: #666; }
-      .error { color: #b00020; }
-      pre { white-space: pre-wrap; line-height: 1.5; }
+      :root { --bg:#0b1020; --card:#141b31; --text:#e9eefc; --muted:#9fb0da; --line:#2b3960; --acc:#8aa6ff; }
+      * { box-sizing:border-box; }
+      body { margin:0; background: radial-gradient(1200px 700px at 0% -10%, #1b2550 0%, var(--bg) 50%); color:var(--text); font-family:Inter,system-ui,Arial,sans-serif; }
+      .wrap { max-width: 900px; margin: 28px auto; padding: 0 16px; }
+      .card { border:1px solid var(--line); border-radius:14px; background:var(--card); padding:18px; }
+      a { color: var(--acc); text-decoration:none; }
+      a:hover { text-decoration:underline; }
+      .muted { color: var(--muted); }
+      .error { color:#ff6b6b; }
+      h1 { margin: 0 0 8px; font-size: 34px; line-height:1.2; }
+      .content { white-space: pre-wrap; line-height: 1.75; font-size: 17px; margin-top: 16px; }
+      .toplink { margin-bottom: 14px; display:inline-block; }
     </style>
   </head>
   <body>
-    <p><a href="./index.html">← Back to posts</a></p>
-    <h1 id="title">Loading...</h1>
-    <p id="meta" class="muted"></p>
-    <pre id="content"></pre>
-    <p id="err" class="error"></p>
+    <div class="wrap">
+      <a class="toplink" href="./index.html">← Back to posts</a>
+      <article class="card">
+        <h1 id="title">Loading...</h1>
+        <p id="meta" class="muted"></p>
+        <div id="content" class="content"></div>
+        <p id="err" class="error"></p>
+      </article>
+    </div>
 
     <script>
       const API_BASE = "https://api.stuff187.com";
       const params = new URLSearchParams(location.search);
       const slug = params.get("slug");
-
-      function esc(s) {
-        return String(s)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/\"/g, "&quot;")
-          .replace(/'/g, "&#039;");
-      }
 
       async function load() {
         const title = document.getElementById("title");
@@ -53,7 +54,7 @@
           const dt = p.updated_at || p.created_at;
           meta.textContent = `Post #${p.id} • ${p.status} • ${new Date(dt).toLocaleString()}`;
           content.textContent = p.content;
-          document.title = `${p.title} - stuff187.com`;
+          document.title = `${p.title} · stuff187.com`;
         } catch (e) {
           err.textContent = `Failed to load post: ${e.message}`;
         }
