@@ -55,8 +55,12 @@ module "ecs_api" {
   container_port     = 8000
   image_uri          = "${aws_ecr_repository.api.repository_url}:latest"
   aws_region         = var.aws_region
-  environment        = { APP_ENV = "dev" }
-  secrets            = {
+  environment = {
+    APP_ENV      = "dev"
+    AWS_REGION   = var.aws_region
+    MEDIA_BUCKET = aws_s3_bucket.media.bucket
+  }
+  secrets = {
     DATABASE_URL = aws_ssm_parameter.database_url.arn
     REDIS_URL    = aws_ssm_parameter.redis_url.arn
   }
@@ -100,4 +104,49 @@ resource "aws_ssm_parameter" "redis_url" {
   value     = local.redis_url
   overwrite = true
   tags      = local.tags
+}
+
+resource "aws_s3_bucket" "media" {
+  bucket        = "${local.name}-media"
+  force_destroy = true
+  tags          = local.tags
+}
+
+resource "aws_s3_bucket_public_access_block" "media" {
+  bucket = aws_s3_bucket.media.id
+
+  block_public_acls       = false
+  ignore_public_acls      = false
+  block_public_policy     = false
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_cors_configuration" "media" {
+  bucket = aws_s3_bucket.media.id
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["PUT", "GET", "HEAD"]
+    allowed_origins = ["https://admin.stuff187.com", "https://app.stuff187.com"]
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3000
+  }
+}
+
+resource "aws_s3_bucket_policy" "media_public_read" {
+  bucket = aws_s3_bucket.media.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "PublicReadGetObject"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = ["s3:GetObject"]
+        Resource  = ["${aws_s3_bucket.media.arn}/*"]
+      }
+    ]
+  })
+
+  depends_on = [aws_s3_bucket_public_access_block.media]
 }

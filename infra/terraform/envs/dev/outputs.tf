@@ -21,3 +21,7 @@ output "db_endpoint" {
 output "redis_endpoint" {
   value = module.redis.redis_endpoint
 }
+
+output "media_bucket" {
+  value = aws_s3_bucket.media.bucket
+}

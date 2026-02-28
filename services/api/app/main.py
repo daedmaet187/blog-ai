@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .db import Base, engine
-from .routers import auth, posts
+from .routers import auth, posts, media
 
 app = FastAPI(title="Blog Mission Control API", version="0.2.0")
 
@@ -19,11 +18,6 @@ app.add_middleware(
 )
 
 
-@app.on_event("startup")
-def on_startup() -> None:
-    Base.metadata.create_all(bind=engine)
-
-
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
@@ -36,3 +30,4 @@ def root() -> dict:
 
 app.include_router(auth.router)
 app.include_router(posts.router)
+app.include_router(media.router)

@@ -80,8 +80,12 @@
           </div>
           <div class="editor-tools">
             <input id="imageUrl" placeholder="https://... image URL" />
-            <button id="insertImageBtn" class="ghost">Insert Image</button>
+            <button id="insertImageBtn" class="ghost">Insert Image URL</button>
             <button id="previewBtn" class="ghost">Toggle Preview</button>
+          </div>
+          <div class="editor-tools">
+            <input id="imageFile" type="file" accept="image/*" />
+            <button id="uploadImageBtn" class="ghost">Upload Image</button>
           </div>
           <div id="preview" class="preview" style="display:none"></div>
           <div class="inline" style="margin-top:10px">
@@ -190,7 +194,7 @@
         editingId = null;
         $('editorMode').textContent = 'Mode: Create new draft';
         $('saveBtn').textContent = 'Create Draft';
-        $('title').value=''; $('slug').value=''; $('content').value=''; $('imageUrl').value='';
+        $('title').value=''; $('slug').value=''; $('content').value=''; $('imageUrl').value=''; $('imageFile').value='';
         $('preview').style.display = 'none';
         $('preview').innerHTML = '';
         setMsg('editorMsg','');
@@ -231,6 +235,38 @@
         $('content').value += md;
         $('imageUrl').value = '';
         if ($('preview').style.display !== 'none') refreshPreview();
+      };
+
+      $('uploadImageBtn').onclick = async () => {
+        if (!token()) return toast('Please login first', false);
+        const file = $('imageFile').files?.[0];
+        if (!file) return toast('Choose an image first', false);
+
+        const btn = $('uploadImageBtn');
+        btn.disabled = true;
+        try {
+          const presign = await api('/media/presign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: file.name, content_type: file.type || 'image/jpeg' })
+          });
+
+          const putRes = await fetch(presign.upload_url, {
+            method: 'PUT',
+            headers: { 'Content-Type': file.type || 'image/jpeg' },
+            body: file,
+          });
+          if (!putRes.ok) throw new Error(`Upload failed: HTTP ${putRes.status}`);
+
+          $('content').value += `\n\n![${file.name}](${presign.public_url})\n`;
+          $('imageFile').value = '';
+          toast('Image uploaded and inserted');
+          if ($('preview').style.display !== 'none') refreshPreview();
+        } catch (e) {
+          toast(e.message, false);
+        } finally {
+          btn.disabled = false;
+        }
       };
 
       $('loginBtn').onclick = async () => {
