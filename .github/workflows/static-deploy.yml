@@ -1,0 +1,37 @@
+name: Static Deploy (Web + Admin)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "apps/web/**"
+      - "apps/admin_dashboard/**"
+      - ".github/workflows/static-deploy.yml"
+
+env:
+  AWS_REGION: eu-central-1
+  WEB_BUCKET: app.stuff187.com
+  ADMIN_BUCKET: admin.stuff187.com
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ROLE_ARN }}
+
+      - name: Sync public web
+        run: aws s3 sync apps/web s3://${WEB_BUCKET} --delete --region ${AWS_REGION}
+
+      - name: Sync admin dashboard
+        run: aws s3 sync apps/admin_dashboard s3://${ADMIN_BUCKET} --delete --region ${AWS_REGION}
