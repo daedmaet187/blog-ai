@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from ..deps import get_db, current_user
 from ..models import Post, User
@@ -8,8 +9,19 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 
 
 @router.get("", response_model=list[PostOut])
-def list_posts(db: Session = Depends(get_db)):
-    return db.query(Post).filter(Post.status == "published").order_by(Post.id.desc()).all()
+def list_posts(
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=20, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    return (
+        db.query(Post)
+        .filter(Post.status == "published")
+        .order_by(Post.id.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 @router.get("/{slug}", response_model=PostOut)
@@ -40,8 +52,11 @@ def update_post(post_id: int, payload: PostUpdate, user: User = Depends(current_
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
+
     for key, value in payload.model_dump(exclude_none=True).items():
         setattr(post, key, value)
+    post.updated_at = datetime.utcnow()
+
     db.add(post)
     db.commit()
     db.refresh(post)

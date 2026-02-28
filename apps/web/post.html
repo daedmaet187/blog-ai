@@ -50,7 +50,8 @@
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const p = await res.json();
           title.textContent = p.title;
-          meta.textContent = `Post #${p.id} • ${p.status}`;
+          const dt = p.updated_at || p.created_at;
+          meta.textContent = `Post #${p.id} • ${p.status} • ${new Date(dt).toLocaleString()}`;
           content.textContent = p.content;
           document.title = `${p.title} - stuff187.com`;
         } catch (e) {

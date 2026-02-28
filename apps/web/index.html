@@ -31,17 +31,22 @@
           .replace(/'/g, "&#039;");
       }
 
+      function fmtDate(iso) {
+        try { return new Date(iso).toLocaleString(); } catch { return iso || ''; }
+      }
+
       async function loadPosts() {
         const status = document.getElementById("status");
         const list = document.getElementById("list");
         try {
-          const res = await fetch(`${API_BASE}/posts`);
+          const res = await fetch(`${API_BASE}/posts?skip=0&limit=20`);
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const posts = await res.json();
           status.textContent = `${posts.length} published post(s)`;
           list.innerHTML = posts.map(p => `
             <article class="post">
               <h2><a href="./post.html?slug=${encodeURIComponent(p.slug)}">${escapeHtml(p.title)}</a></h2>
+              <p class="muted">Published: ${escapeHtml(fmtDate(p.updated_at || p.created_at))}</p>
               <p>${escapeHtml((p.content || '').slice(0, 180))}${(p.content || '').length > 180 ? '...' : ''}</p>
               <a href="./post.html?slug=${encodeURIComponent(p.slug)}">Read more →</a>
             </article>

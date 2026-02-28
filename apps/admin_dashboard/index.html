@@ -5,17 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Dashboard</title>
     <style>
-      body { font-family: Arial, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+      body { font-family: Arial, sans-serif; max-width: 980px; margin: 2rem auto; padding: 0 1rem; }
       input, textarea, button { width: 100%; padding: 0.6rem; margin: 0.3rem 0; }
       textarea { min-height: 140px; }
-      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
       .card { border: 1px solid #ddd; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
       .ok { color: #0a7f2e; }
       .err { color: #b00020; }
       .muted { color: #666; font-size: 0.9rem; }
-      .inline { display: flex; gap: .5rem; }
+      .inline { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
       .inline button { width: auto; }
       code { background: #f5f5f5; padding: 0.1rem 0.3rem; border-radius: 4px; }
+      ul { padding-left: 1rem; }
     </style>
   </head>
   <body>
@@ -28,7 +28,8 @@
       <input id="password" type="password" placeholder="Password" />
       <div class="inline">
         <button id="loginBtn">Login</button>
-        <button id="whoBtn">Check Token</button>
+        <button id="whoBtn">Who am I</button>
+        <button id="logoutBtn">Logout</button>
       </div>
       <div id="authMsg" class="muted"></div>
     </section>
@@ -49,6 +50,14 @@
       <div id="publishMsg" class="muted"></div>
     </section>
 
+    <section class="card">
+      <h3>Published Posts</h3>
+      <div class="inline">
+        <button id="refreshBtn">Refresh List</button>
+      </div>
+      <ul id="postList"></ul>
+    </section>
+
     <script>
       const API = "https://api.stuff187.com";
 
@@ -57,13 +66,23 @@
         el.className = ok ? 'ok' : 'err';
       }
 
-      function getToken() {
-        return localStorage.getItem('admin_token') || '';
+      function getToken() { return localStorage.getItem('admin_token') || ''; }
+      function setToken(t) { localStorage.setItem('admin_token', t); }
+      function clearToken() { localStorage.removeItem('admin_token'); }
+      function slugify(s='') {
+        return s.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+      }
+      function fmtErr(data, status) {
+        if (!data) return `HTTP ${status}`;
+        if (typeof data.detail === 'string') return data.detail;
+        if (Array.isArray(data.detail)) return data.detail.map(x => x.msg).join('; ');
+        return `HTTP ${status}`;
       }
 
-      function setToken(t) {
-        localStorage.setItem('admin_token', t);
-      }
+      document.getElementById('title').addEventListener('input', (e) => {
+        const slug = document.getElementById('slug');
+        if (!slug.value.trim()) slug.value = slugify(e.target.value);
+      });
 
       document.getElementById('loginBtn').onclick = async () => {
         const email = document.getElementById('email').value.trim();
@@ -78,7 +97,7 @@
             body,
           });
           const data = await res.json();
-          if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+          if (!res.ok) throw new Error(fmtErr(data, res.status));
           setToken(data.access_token);
           setMsg(msg, 'Login success. Token saved locally.');
         } catch (e) {
@@ -86,39 +105,53 @@
         }
       };
 
-      document.getElementById('whoBtn').onclick = () => {
+      document.getElementById('whoBtn').onclick = async () => {
         const msg = document.getElementById('authMsg');
         const token = getToken();
         if (!token) return setMsg(msg, 'No token stored yet.', false);
-        setMsg(msg, `Token loaded (${token.slice(0, 24)}...)`);
+        try {
+          const res = await fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+          const data = await res.json();
+          if (!res.ok) throw new Error(fmtErr(data, res.status));
+          setMsg(msg, `Logged in as ${data.email} (${data.role})`);
+        } catch (e) {
+          setMsg(msg, `Token check failed: ${e.message}`, false);
+        }
+      };
+
+      document.getElementById('logoutBtn').onclick = () => {
+        clearToken();
+        setMsg(document.getElementById('authMsg'), 'Logged out.');
       };
 
       document.getElementById('createBtn').onclick = async () => {
         const token = getToken();
+        const btn = document.getElementById('createBtn');
         const msg = document.getElementById('createMsg');
         if (!token) return setMsg(msg, 'Please login first.', false);
 
         const payload = {
-          title: document.getElementById('title').value,
-          slug: document.getElementById('slug').value,
+          title: document.getElementById('title').value.trim(),
+          slug: document.getElementById('slug').value.trim(),
           content: document.getElementById('content').value,
         };
 
+        btn.disabled = true;
         try {
           const res = await fetch(`${API}/posts`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify(payload),
           });
           const data = await res.json();
-          if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+          if (!res.ok) throw new Error(fmtErr(data, res.status));
           setMsg(msg, `Draft created. Post ID: ${data.id}`);
           document.getElementById('postId').value = data.id;
+          await refreshPosts();
         } catch (e) {
           setMsg(msg, `Create failed: ${e.message}`, false);
+        } finally {
+          btn.disabled = false;
         }
       };
 
@@ -133,19 +166,33 @@
         try {
           const res = await fetch(`${API}/posts/${id}`, {
             method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ status: 'published' }),
           });
           const data = await res.json();
-          if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+          if (!res.ok) throw new Error(fmtErr(data, res.status));
           setMsg(msg, `Post published: ${data.slug}`);
+          await refreshPosts();
         } catch (e) {
           setMsg(msg, `Publish failed: ${e.message}`, false);
         }
       };
+
+      async function refreshPosts() {
+        const list = document.getElementById('postList');
+        list.innerHTML = '<li class="muted">Loading…</li>';
+        try {
+          const res = await fetch(`${API}/posts?skip=0&limit=20`);
+          const items = await res.json();
+          if (!res.ok) throw new Error(fmtErr(items, res.status));
+          list.innerHTML = items.map(p => `<li>#${p.id} — <strong>${p.title}</strong> (<code>${p.slug}</code>)</li>`).join('') || '<li class="muted">No posts.</li>';
+        } catch (e) {
+          list.innerHTML = `<li class="err">${e.message}</li>`;
+        }
+      }
+
+      document.getElementById('refreshBtn').onclick = refreshPosts;
+      refreshPosts();
     </script>
   </body>
 </html>
