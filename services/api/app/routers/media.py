@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime, timezone
 
 import boto3
+from botocore.config import Config
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
@@ -42,7 +43,12 @@ def create_upload_url(payload: MediaPresignIn, user: User = Depends(current_user
     safe_ext = "jpg" if ext == "jpeg" else ext
     key = f"uploads/{datetime.now(timezone.utc).strftime('%Y/%m/%d')}/{uuid.uuid4().hex}.{safe_ext}"
 
-    s3 = boto3.client("s3", region_name=region)
+    s3 = boto3.client(
+        "s3",
+        region_name=region,
+        endpoint_url=f"https://s3.{region}.amazonaws.com",
+        config=Config(signature_version="s3v4"),
+    )
     try:
         upload_url = s3.generate_presigned_url(
             ClientMethod="put_object",
