@@ -5,177 +5,251 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Dashboard · Blog Mission Control</title>
     <style>
-      :root {
-        --bg: #0b1020;
-        --panel: #131a2e;
-        --panel-2: #1a2340;
-        --text: #e9eefc;
-        --muted: #9fb0da;
-        --ok: #33d17a;
-        --err: #ff6b6b;
-        --acc: #7c9cff;
-        --line: #2a3760;
-      }
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        background: radial-gradient(1200px 800px at 0% -10%, #1b2550 0%, var(--bg) 50%);
-        color: var(--text);
-        font-family: Inter, system-ui, Arial, sans-serif;
-      }
-      .wrap { max-width: 980px; margin: 28px auto; padding: 0 16px; }
-      .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-      .badge { color: var(--muted); font-size: 13px; }
-      .card {
-        background: linear-gradient(180deg, var(--panel), var(--panel-2));
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        padding: 16px;
-        margin-bottom: 14px;
-        box-shadow: 0 10px 30px rgba(0,0,0,.25);
-      }
-      h1, h3 { margin: 0 0 10px; }
-      h1 { font-size: 30px; }
-      h3 { font-size: 20px; }
-      label { font-size: 12px; color: var(--muted); display:block; margin-top: 8px; }
-      input, textarea, button {
-        width: 100%;
-        border-radius: 10px;
-        border: 1px solid var(--line);
-        background: #0f1730;
-        color: var(--text);
-        padding: 10px 12px;
-        margin-top: 6px;
-      }
-      textarea { min-height: 150px; resize: vertical; }
-      .inline { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-      .inline button { width: auto; cursor: pointer; }
-      .primary { background: var(--acc); color: #0b1020; border: none; font-weight: 700; }
-      .ghost { background: transparent; }
-      .ok { color: var(--ok); }
-      .err { color: var(--err); }
-      .muted { color: var(--muted); font-size: 13px; }
-      ul { padding-left: 18px; margin: 8px 0 0; }
-      code { background:#0f1730; padding:2px 6px; border-radius:6px; }
-      .grid { display:grid; grid-template-columns: 1fr; gap: 14px; }
-      @media (min-width: 900px){ .grid { grid-template-columns: 1fr 1fr; } }
+      :root { --bg:#0b1020; --panel:#131a2e; --panel2:#1a2340; --text:#e9eefc; --muted:#9fb0da; --ok:#33d17a; --err:#ff6b6b; --acc:#7c9cff; --line:#2a3760; --warn:#ffb454; }
+      *{box-sizing:border-box}
+      body{margin:0;background:radial-gradient(1200px 800px at 0% -10%, #1b2550 0%, var(--bg) 50%);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif}
+      .wrap{max-width:1100px;margin:28px auto;padding:0 16px}
+      .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+      .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+      h1,h3{margin:0 0 10px} h1{font-size:30px} h3{font-size:20px}
+      label{font-size:12px;color:var(--muted);display:block;margin-top:8px}
+      input,textarea,select,button{width:100%;border-radius:10px;border:1px solid var(--line);background:#0f1730;color:var(--text);padding:10px 12px;margin-top:6px}
+      textarea{min-height:170px;resize:vertical}
+      .inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+      .inline button{width:auto;cursor:pointer}
+      .primary{background:var(--acc);color:#0b1020;border:none;font-weight:700}
+      .ghost{background:transparent}
+      .danger{background:#41202a;border-color:#6b3143}
+      .ok{color:var(--ok)} .err{color:var(--err)} .muted{color:var(--muted);font-size:13px}
+      .grid{display:grid;grid-template-columns:1fr;gap:14px} @media (min-width:980px){.grid{grid-template-columns:1fr 1fr}}
+      table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
+      th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+      th{color:var(--muted);font-weight:600}
+      .badge{padding:2px 8px;border-radius:999px;font-size:12px;display:inline-block}
+      .b-pub{background:#163726;color:#8ff0b3}.b-draft{background:#423315;color:#ffcb6b}
+      .toast{position:fixed;right:16px;bottom:16px;min-width:250px;padding:12px 14px;border-radius:10px;background:#101932;border:1px solid var(--line);display:none}
+      .toast.show{display:block}
     </style>
   </head>
   <body>
     <div class="wrap">
       <div class="top">
         <h1>Admin Dashboard</h1>
-        <div class="badge">API: <code>https://api.stuff187.com</code></div>
+        <div class="muted">API: <code>https://api.stuff187.com</code></div>
       </div>
 
       <div class="grid">
         <section class="card">
-          <h3>Login</h3>
-          <label>Email</label>
-          <input id="email" value="admin@stuff187.com" />
-          <label>Password</label>
-          <input id="password" type="password" placeholder="••••••••" />
-          <div class="inline">
+          <h3>Auth</h3>
+          <label>Email</label><input id="email" value="admin@stuff187.com" />
+          <label>Password</label><input id="password" type="password" placeholder="••••••••" />
+          <div class="inline" style="margin-top:10px">
             <button id="loginBtn" class="primary">Login</button>
             <button id="whoBtn" class="ghost">Who am I</button>
             <button id="logoutBtn" class="ghost">Logout</button>
           </div>
-          <div id="authMsg" class="muted"></div>
+          <p id="authMsg" class="muted"></p>
         </section>
 
         <section class="card">
-          <h3>Publish Post</h3>
-          <label>Post ID</label>
-          <input id="postId" type="number" placeholder="e.g. 2" />
-          <button id="publishBtn" class="primary">Publish</button>
-          <div id="publishMsg" class="muted"></div>
+          <h3>Post Editor</h3>
+          <p class="muted" id="editorMode">Mode: Create new draft</p>
+          <label>Title</label><input id="title" placeholder="My great post" />
+          <label>Slug (kebab-case)</label><input id="slug" placeholder="my-great-post" />
+          <label>Content</label><textarea id="content" placeholder="Write your post..."></textarea>
+          <div class="inline" style="margin-top:10px">
+            <button id="saveBtn" class="primary">Create Draft</button>
+            <button id="publishBtn" class="ghost">Save & Publish</button>
+            <button id="resetBtn" class="ghost">Reset Form</button>
+          </div>
+          <p id="editorMsg" class="muted"></p>
         </section>
       </div>
 
       <section class="card">
-        <h3>Create Draft Post</h3>
-        <label>Title</label>
-        <input id="title" placeholder="2nd Post" />
-        <label>Slug (kebab-case)</label>
-        <input id="slug" placeholder="second-post" />
-        <label>Content</label>
-        <textarea id="content" placeholder="Write your post..."></textarea>
-        <button id="createBtn" class="primary">Create Draft</button>
-        <div id="createMsg" class="muted"></div>
-      </section>
-
-      <section class="card">
-        <div class="inline" style="justify-content:space-between; align-items:center;">
-          <h3 style="margin:0;">Published Posts</h3>
-          <button id="refreshBtn" class="ghost">Refresh</button>
+        <div class="inline" style="justify-content:space-between;margin-bottom:8px">
+          <h3 style="margin:0">Manage Posts</h3>
+          <div class="inline">
+            <input id="q" placeholder="Search title or slug" style="width:220px" />
+            <select id="statusFilter" style="width:140px">
+              <option value="">All</option>
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+            </select>
+            <button id="refreshBtn" class="ghost">Refresh</button>
+          </div>
         </div>
-        <ul id="postList"></ul>
+
+        <div style="overflow:auto">
+          <table>
+            <thead><tr><th>ID</th><th>Title</th><th>Slug</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead>
+            <tbody id="rows"><tr><td colspan="6" class="muted">Loading…</td></tr></tbody>
+          </table>
+        </div>
       </section>
     </div>
 
+    <div id="toast" class="toast"></div>
+
     <script>
-      const API = "https://api.stuff187.com";
-      const msg = (id, t, ok=true) => { const el=document.getElementById(id); el.textContent=t; el.className=ok?'ok':'err'; };
+      const API = 'https://api.stuff187.com';
+      let editingId = null;
+
+      const $ = id => document.getElementById(id);
       const token = () => localStorage.getItem('admin_token') || '';
       const setToken = v => localStorage.setItem('admin_token', v);
       const clearToken = () => localStorage.removeItem('admin_token');
       const slugify = (s='') => s.toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-');
       const fmtErr = (d,s)=> typeof d?.detail==='string' ? d.detail : Array.isArray(d?.detail) ? d.detail.map(x=>x.msg).join('; ') : `HTTP ${s}`;
+      const dt = d => { try { return new Date(d).toLocaleString(); } catch { return d || '' }};
 
-      document.getElementById('title').addEventListener('input', e=>{
-        const s=document.getElementById('slug'); if(!s.value.trim()) s.value=slugify(e.target.value);
-      });
+      function toast(text, ok=true){ const t=$('toast'); t.textContent=text; t.style.borderColor=ok?'#2f6f4c':'#7a3047'; t.className='toast show'; setTimeout(()=>t.className='toast', 2200); }
+      function setMsg(id,text,ok=true){ const el=$(id); el.textContent=text; el.className=ok?'ok':'err'; }
 
-      document.getElementById('loginBtn').onclick = async () => {
-        try {
-          const body = new URLSearchParams({ username: email.value.trim(), password: password.value });
-          const res = await fetch(`${API}/auth/login`, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
-          const data = await res.json(); if(!res.ok) throw new Error(fmtErr(data,res.status));
-          setToken(data.access_token); msg('authMsg','Login success. Token saved.');
-        } catch(e){ msg('authMsg',`Login failed: ${e.message}`,false); }
-      };
-
-      document.getElementById('whoBtn').onclick = async () => {
-        if(!token()) return msg('authMsg','No token stored.',false);
-        try {
-          const res = await fetch(`${API}/auth/me`, { headers:{Authorization:`Bearer ${token()}`} });
-          const data = await res.json(); if(!res.ok) throw new Error(fmtErr(data,res.status));
-          msg('authMsg',`Logged in as ${data.email} (${data.role})`);
-        } catch(e){ msg('authMsg',`Token check failed: ${e.message}`,false); }
-      };
-
-      document.getElementById('logoutBtn').onclick = () => { clearToken(); msg('authMsg','Logged out.'); };
-
-      document.getElementById('createBtn').onclick = async () => {
-        if(!token()) return msg('createMsg','Please login first.',false);
-        const btn=createBtn; btn.disabled=true;
-        try {
-          const payload = { title:title.value.trim(), slug:slug.value.trim(), content:content.value };
-          const res = await fetch(`${API}/posts`, { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token()}`}, body:JSON.stringify(payload) });
-          const data = await res.json(); if(!res.ok) throw new Error(fmtErr(data,res.status));
-          postId.value=data.id; msg('createMsg',`Draft created. Post ID: ${data.id}`); refreshPosts();
-        } catch(e){ msg('createMsg',`Create failed: ${e.message}`,false); }
-        finally { btn.disabled=false; }
-      };
-
-      document.getElementById('publishBtn').onclick = async () => {
-        if(!token()) return msg('publishMsg','Please login first.',false);
-        if(!postId.value) return msg('publishMsg','Enter post ID.',false);
-        try {
-          const res = await fetch(`${API}/posts/${postId.value}`, { method:'PATCH', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token()}`}, body:JSON.stringify({status:'published'}) });
-          const data = await res.json(); if(!res.ok) throw new Error(fmtErr(data,res.status));
-          msg('publishMsg',`Published: ${data.slug}`); refreshPosts();
-        } catch(e){ msg('publishMsg',`Publish failed: ${e.message}`,false); }
-      };
-
-      async function refreshPosts(){
-        const el=postList; el.innerHTML='<li class="muted">Loading…</li>';
-        try {
-          const res=await fetch(`${API}/posts?skip=0&limit=20`); const data=await res.json(); if(!res.ok) throw new Error(fmtErr(data,res.status));
-          el.innerHTML = data.length ? data.map(p=>`<li>#${p.id} — <strong>${p.title}</strong> (<code>${p.slug}</code>)</li>`).join('') : '<li class="muted">No posts.</li>';
-        } catch(e){ el.innerHTML=`<li class="err">${e.message}</li>`; }
+      async function api(path, options={}) {
+        const headers = { ...(options.headers || {}) };
+        if (token()) headers.Authorization = `Bearer ${token()}`;
+        const res = await fetch(`${API}${path}`, { ...options, headers });
+        let data = null; try { data = await res.json(); } catch {}
+        if (!res.ok) throw new Error(fmtErr(data, res.status));
+        return data;
       }
 
+      function resetForm(){
+        editingId = null;
+        $('editorMode').textContent = 'Mode: Create new draft';
+        $('saveBtn').textContent = 'Create Draft';
+        $('title').value=''; $('slug').value=''; $('content').value='';
+        setMsg('editorMsg','');
+      }
+
+      $('title').addEventListener('input', e => { if (!$('slug').value.trim()) $('slug').value = slugify(e.target.value); });
+
+      $('loginBtn').onclick = async () => {
+        try {
+          const body = new URLSearchParams({ username: $('email').value.trim(), password: $('password').value });
+          const data = await api('/auth/login', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
+          setToken(data.access_token);
+          setMsg('authMsg','Login success.');
+          toast('Logged in');
+          refreshPosts();
+        } catch (e) { setMsg('authMsg', `Login failed: ${e.message}`, false); }
+      };
+
+      $('whoBtn').onclick = async () => {
+        if (!token()) return setMsg('authMsg','No token stored.',false);
+        try { const me = await api('/auth/me'); setMsg('authMsg', `Logged in as ${me.email} (${me.role})`); }
+        catch (e) { setMsg('authMsg',`Token check failed: ${e.message}`,false); }
+      };
+
+      $('logoutBtn').onclick = () => { clearToken(); setMsg('authMsg','Logged out.'); toast('Logged out'); };
+
+      $('saveBtn').onclick = async () => {
+        if (!token()) return setMsg('editorMsg','Please login first.',false);
+        const payload = { title: $('title').value.trim(), slug: $('slug').value.trim(), content: $('content').value };
+        $('saveBtn').disabled = true;
+        try {
+          if (editingId) {
+            await api(`/posts/${editingId}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+            setMsg('editorMsg', `Post #${editingId} updated.`);
+            toast('Post updated');
+          } else {
+            const created = await api('/posts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+            setMsg('editorMsg', `Draft created #${created.id}`);
+            toast('Draft created');
+          }
+          resetForm();
+          refreshPosts();
+        } catch (e) {
+          setMsg('editorMsg', `Save failed: ${e.message}`, false);
+        } finally { $('saveBtn').disabled = false; }
+      };
+
+      $('publishBtn').onclick = async () => {
+        if (!token()) return setMsg('editorMsg','Please login first.',false);
+        try {
+          if (editingId) {
+            await api(`/posts/${editingId}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ title:$('title').value.trim(), slug:$('slug').value.trim(), content:$('content').value, status:'published' }) });
+            toast('Post updated + published');
+          } else {
+            const created = await api('/posts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ title:$('title').value.trim(), slug:$('slug').value.trim(), content:$('content').value }) });
+            await api(`/posts/${created.id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ status:'published' }) });
+            toast('Draft created + published');
+          }
+          resetForm();
+          refreshPosts();
+        } catch (e) { setMsg('editorMsg', `Publish failed: ${e.message}`, false); }
+      };
+
+      $('resetBtn').onclick = resetForm;
+
+      async function toggleStatus(id, nextStatus){
+        try { await api(`/posts/${id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ status: nextStatus }) }); toast(`Post #${id} -> ${nextStatus}`); refreshPosts(); }
+        catch (e) { toast(e.message, false); }
+      }
+
+      async function deletePost(id){
+        if (!confirm(`Delete post #${id}? This cannot be undone.`)) return;
+        try { await api(`/posts/${id}`, { method:'DELETE' }); toast(`Post #${id} deleted`); if (editingId===id) resetForm(); refreshPosts(); }
+        catch (e) { toast(e.message, false); }
+      }
+
+      function loadIntoForm(p){
+        editingId = p.id;
+        $('editorMode').textContent = `Mode: Editing #${p.id}`;
+        $('saveBtn').textContent = 'Save Changes';
+        $('title').value = p.title; $('slug').value = p.slug; $('content').value = p.content || '';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      let postsIndex = {};
+
+      async function refreshPosts(){
+        const rows = $('rows');
+        rows.innerHTML = '<tr><td colspan="6" class="muted">Loading…</td></tr>';
+        if (!token()) { rows.innerHTML = '<tr><td colspan="6" class="muted">Login to view/manage all posts.</td></tr>'; return; }
+        try {
+          const q = encodeURIComponent($('q').value.trim());
+          const status = encodeURIComponent($('statusFilter').value);
+          const data = await api(`/posts/admin?skip=0&limit=100${status?`&status=${status}`:''}${q?`&q=${q}`:''}`);
+          postsIndex = Object.fromEntries(data.map(p => [String(p.id), p]));
+          if (!data.length) { rows.innerHTML = '<tr><td colspan="6" class="muted">No posts found.</td></tr>'; return; }
+          rows.innerHTML = data.map(p => `
+            <tr>
+              <td>#${p.id}</td>
+              <td>${escapeHtml(p.title)}</td>
+              <td><code>${escapeHtml(p.slug)}</code></td>
+              <td><span class="badge ${p.status==='published'?'b-pub':'b-draft'}">${p.status}</span></td>
+              <td>${escapeHtml(dt(p.updated_at || p.created_at))}</td>
+              <td>
+                <div class="inline">
+                  <button class="ghost" data-action="edit" data-id="${p.id}">Edit</button>
+                  <button class="ghost" data-action="toggle" data-id="${p.id}" data-next="${p.status === 'published' ? 'draft' : 'published'}">${p.status === 'published' ? 'Unpublish' : 'Publish'}</button>
+                  <button class="danger" data-action="delete" data-id="${p.id}">Delete</button>
+                </div>
+              </td>
+            </tr>
+          `).join('');
+        } catch (e) {
+          rows.innerHTML = `<tr><td colspan="6" class="err">${escapeHtml(e.message)}</td></tr>`;
+        }
+      }
+
+      function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#039;'); }
+
+      $('rows').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        const id = btn.dataset.id;
+        const action = btn.dataset.action;
+        if (action === 'edit') return loadIntoForm(postsIndex[id]);
+        if (action === 'toggle') return toggleStatus(Number(id), btn.dataset.next);
+        if (action === 'delete') return deletePost(Number(id));
+      });
+
+      $('refreshBtn').onclick = refreshPosts;
+      $('q').addEventListener('keydown', e => { if (e.key === 'Enter') refreshPosts(); });
+      $('statusFilter').onchange = refreshPosts;
       refreshPosts();
     </script>
   </body>
