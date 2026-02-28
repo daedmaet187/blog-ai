@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Post</title>
+    <style>
+      body { font-family: Arial, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; }
+      a { color: #0b57d0; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .muted { color: #666; }
+      .error { color: #b00020; }
+      pre { white-space: pre-wrap; line-height: 1.5; }
+    </style>
+  </head>
+  <body>
+    <p><a href="./index.html">← Back to posts</a></p>
+    <h1 id="title">Loading...</h1>
+    <p id="meta" class="muted"></p>
+    <pre id="content"></pre>
+    <p id="err" class="error"></p>
+
+    <script>
+      const API_BASE = "https://api.stuff187.com";
+      const params = new URLSearchParams(location.search);
+      const slug = params.get("slug");
+
+      function esc(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/\"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      async function load() {
+        const title = document.getElementById("title");
+        const meta = document.getElementById("meta");
+        const content = document.getElementById("content");
+        const err = document.getElementById("err");
+
+        if (!slug) {
+          title.textContent = "Missing slug";
+          return;
+        }
+
+        try {
+          const res = await fetch(`${API_BASE}/posts/${encodeURIComponent(slug)}`);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const p = await res.json();
+          title.textContent = p.title;
+          meta.textContent = `Post #${p.id} • ${p.status}`;
+          content.textContent = p.content;
+          document.title = `${p.title} - stuff187.com`;
+        } catch (e) {
+          err.textContent = `Failed to load post: ${e.message}`;
+        }
+      }
+
+      load();
+    </script>
+  </body>
+</html>

@@ -4,9 +4,54 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>stuff187.com - Blog</title>
+    <style>
+      body { font-family: Arial, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; }
+      .post { border: 1px solid #ddd; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
+      a { color: #0b57d0; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .muted { color: #666; font-size: 0.9rem; }
+      .error { color: #b00020; }
+    </style>
   </head>
   <body>
-    <h1>Public Web Bootstrap ✅</h1>
-    <p>Next: posts feed + post page + SEO.</p>
+    <h1>Blog</h1>
+    <p class="muted">Powered by Mission Control</p>
+    <div id="status" class="muted">Loading posts...</div>
+    <div id="list"></div>
+
+    <script>
+      const API_BASE = "https://api.stuff187.com";
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/\"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      async function loadPosts() {
+        const status = document.getElementById("status");
+        const list = document.getElementById("list");
+        try {
+          const res = await fetch(`${API_BASE}/posts`);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const posts = await res.json();
+          status.textContent = `${posts.length} published post(s)`;
+          list.innerHTML = posts.map(p => `
+            <article class="post">
+              <h2><a href="./post.html?slug=${encodeURIComponent(p.slug)}">${escapeHtml(p.title)}</a></h2>
+              <p>${escapeHtml((p.content || '').slice(0, 180))}${(p.content || '').length > 180 ? '...' : ''}</p>
+              <a href="./post.html?slug=${encodeURIComponent(p.slug)}">Read more →</a>
+            </article>
+          `).join("");
+        } catch (e) {
+          status.innerHTML = `<span class="error">Failed to load posts: ${escapeHtml(e.message)}</span>`;
+        }
+      }
+
+      loadPosts();
+    </script>
   </body>
 </html>
