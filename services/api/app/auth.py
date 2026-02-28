@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 SECRET_KEY = os.getenv("JWT_SECRET", "dev-secret-change-me")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_MINUTES", "120"))
-pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
