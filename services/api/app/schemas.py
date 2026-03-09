@@ -68,3 +68,20 @@ class ModerationResult(BaseModel):
 class PublishPostResponse(BaseModel):
     post: PostOut
     moderation: ModerationResult
+
+
+class ModerationQueueItemOut(BaseModel):
+    id: int
+    post_id: int
+    decision: str
+    reasons: list[ModerationReasonCode]
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    resolved_by_user_id: int | None = None
+    resolution_note: str | None = None
+
+
+class ModerationOverrideIn(BaseModel):
+    action: str = Field(pattern=r"^(approve|reject)$")
+    note: str | None = Field(default=None, max_length=500)

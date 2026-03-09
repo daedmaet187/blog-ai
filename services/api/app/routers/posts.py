@@ -1,10 +1,13 @@
+import json
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
+from ..audit import log_event
 from ..deps import get_db, current_user
-from ..models import Post, User
+from ..models import ModerationQueueItem, Post, User
 from ..schemas import (
+    ModerationDecision,
     PostCreate,
     PostUpdate,
     PostOut,
@@ -115,9 +118,29 @@ def publish_post(post_id: int, user: User = Depends(current_user), db: Session =
     db.commit()
     db.refresh(post)
 
+    moderation = evaluate_post_moderation(db, post)
+    if moderation.decision == ModerationDecision.FLAG:
+        queue_item = ModerationQueueItem(
+            post_id=post.id,
+            decision=moderation.decision.value,
+            reasons=json.dumps([reason.value for reason in moderation.reasons]),
+            status="pending",
+        )
+        db.add(queue_item)
+        db.commit()
+        db.refresh(queue_item)
+
+        log_event(
+            db,
+            event_type="moderation.flagged",
+            actor_user_id=user.id,
+            post_id=post.id,
+            details=json.dumps({"queue_item_id": queue_item.id, "reasons": [r.value for r in moderation.reasons]}),
+        )
+
     return PublishPostResponse(
         post=post,
-        moderation=evaluate_post_moderation(db, post),
+        moderation=moderation,
     )
 
 

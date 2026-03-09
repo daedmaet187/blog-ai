@@ -25,3 +25,28 @@ class Post(Base):
     author_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ModerationQueueItem(Base):
+    __tablename__ = "moderation_queue"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"), index=True)
+    decision: Mapped[str] = mapped_column(String(20), default="FLAG")
+    reasons: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(20), default="pending")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    resolved_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    resolution_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    event_type: Mapped[str] = mapped_column(String(100), index=True)
+    actor_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    post_id: Mapped[int | None] = mapped_column(ForeignKey("posts.id"), nullable=True)
+    details: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
