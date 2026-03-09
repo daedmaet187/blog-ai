@@ -85,3 +85,25 @@ class ModerationQueueItemOut(BaseModel):
 class ModerationOverrideIn(BaseModel):
     action: str = Field(pattern=r"^(approve|reject)$")
     note: str | None = Field(default=None, max_length=500)
+
+
+class ProjectRequestCreate(BaseModel):
+    title: str = Field(min_length=3, max_length=255)
+    package: str = Field(pattern=r"^(starter|growth|premium)$")
+    brief_en: str = Field(min_length=10)
+    brief_ar: str = Field(min_length=10)
+
+
+class ProjectRequestOut(BaseModel):
+    id: int
+    client_user_id: int
+    title: str
+    package: str
+    brief_en: str
+    brief_ar: str
+    state: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True

@@ -1,1 +1,1 @@
-from . import auth, posts, media
+from . import auth, posts, media, projects
