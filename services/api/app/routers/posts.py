@@ -9,9 +9,8 @@ from ..schemas import (
     PostUpdate,
     PostOut,
     PublishPostResponse,
-    ModerationResult,
-    ModerationDecision,
 )
+from ..posts.service import evaluate_post_moderation
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -118,7 +117,7 @@ def publish_post(post_id: int, user: User = Depends(current_user), db: Session =
 
     return PublishPostResponse(
         post=post,
-        moderation=ModerationResult(decision=ModerationDecision.PASS, reasons=[]),
+        moderation=evaluate_post_moderation(db, post),
     )
 
 
