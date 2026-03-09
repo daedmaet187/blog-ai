@@ -202,3 +202,10 @@ class DomainMappingOut(BaseModel):
     state: str
     deploy_status: str
     domain: str
+
+
+class AdminApprovalQueueItemOut(BaseModel):
+    project_id: int
+    title: str
+    state: str
+    updated_at: datetime

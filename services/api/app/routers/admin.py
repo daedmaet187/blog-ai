@@ -11,6 +11,7 @@ from ..models import Project, ProjectDeployRequest, ProjectDesignBrief, ProjectR
 from ..project_state import ProjectState, ensure_transition
 from ..repos.github_provisioner import GitHubProvisioner
 from ..schemas import (
+    AdminApprovalQueueItemOut,
     AdminDeployDecisionOut,
     AdminDesignDecisionOut,
     BuildGenerateOut,
@@ -25,6 +26,43 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 def _require_design_approver(user: User) -> None:
     if user.role not in {"owner", "admin"}:
         raise HTTPException(status_code=403, detail="Admin access required")
+
+
+@router.get("/projects/approval-queue", response_model=list[AdminApprovalQueueItemOut])
+def list_project_approval_queue(
+    type: str = "all",
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    _require_design_approver(user)
+
+    states = {
+        "design": [ProjectState.AWAITING_ADMIN_DESIGN_APPROVAL.value],
+        "deploy": [ProjectState.AWAITING_ADMIN_DEPLOY_APPROVAL.value],
+        "all": [
+            ProjectState.AWAITING_ADMIN_DESIGN_APPROVAL.value,
+            ProjectState.AWAITING_ADMIN_DEPLOY_APPROVAL.value,
+        ],
+    }
+    if type not in states:
+        raise HTTPException(status_code=400, detail="Invalid queue type")
+
+    projects = (
+        db.query(Project)
+        .filter(Project.state.in_(states[type]))
+        .order_by(Project.updated_at.desc())
+        .all()
+    )
+
+    return [
+        AdminApprovalQueueItemOut(
+            project_id=project.id,
+            title=project.title,
+            state=project.state,
+            updated_at=project.updated_at,
+        )
+        for project in projects
+    ]
 
 
 @router.post("/projects/{project_id}/design/generate", response_model=DesignBriefGenerateOut)

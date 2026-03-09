@@ -1,13 +1,14 @@
 # Admin Dashboard
 
-Simple static admin UI connected to `https://api.stuff187.com`.
+Minimal static MVP admin dashboard connected to `https://api.stuff187.com`.
 
-## Features
-- Login using `/auth/login`
-- Create/edit draft post
-- Publish or unpublish posts
-- Review moderation queue (`/moderation/queue`)
-- Override moderation decision (approve/reject) with optional note
-- Reason codes are shown as `CODE + human label` chips for clarity
+## V1 critical flows
+- Login
+- Approval queue for design/deploy (`/admin/projects/approval-queue`)
+- Approve/reject design (`/admin/projects/{id}/design/{approve|reject}`)
+- Approve/reject deploy (`/admin/projects/{id}/deploy/{approve|reject}`)
 
-Token is stored in `localStorage` for quick testing.
+## Smoke check
+```bash
+cd apps/admin_dashboard && python smoke_test.py
+```

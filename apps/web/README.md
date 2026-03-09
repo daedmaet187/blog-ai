@@ -1,10 +1,14 @@
-# Public Web
+# Client Portal (Web)
 
-Simple static public web UI connected to `https://api.stuff187.com`.
+Minimal static MVP client portal connected to `https://api.stuff187.com`.
 
-## Pages
-- `index.html` - published posts feed
-- `post.html?slug=<slug>` - post detail page
+## V1 critical flows
+- Login
+- Submit project request (`/projects/requests`)
+- Clarification inbox (`/projects/{id}/clarification/start`, `/projects/{id}/clarification/answers`)
+- Project timeline / status from project state
 
-## Run locally
-Open files directly in browser or serve with a static server.
+## Smoke check
+```bash
+cd apps/web && python smoke_test.py
+```

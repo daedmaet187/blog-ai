@@ -3,63 +3,236 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>stuff187.com · Blog</title>
+    <title>Client Portal · AI Landing Platform</title>
     <style>
-      :root { --bg:#0b1020; --card:#141b31; --text:#e9eefc; --muted:#9fb0da; --line:#2b3960; --acc:#8aa6ff; }
-      * { box-sizing:border-box; }
-      body { margin:0; background: radial-gradient(1200px 700px at 0% -10%, #1b2550 0%, var(--bg) 50%); color:var(--text); font-family:Inter,system-ui,Arial,sans-serif; }
-      .wrap { max-width: 880px; margin: 28px auto; padding: 0 16px; }
-      .top { display:flex; justify-content:space-between; align-items:end; }
-      .muted { color: var(--muted); }
-      .post { border:1px solid var(--line); border-radius:14px; background:var(--card); padding:14px; margin:12px 0; }
-      h1 { margin:0; font-size:32px; }
-      h2 { margin:0 0 6px; }
-      a { color: var(--acc); text-decoration:none; }
-      a:hover { text-decoration:underline; }
-      .error { color:#ff6b6b; }
+      :root { --bg:#0b1020; --panel:#131a2e; --panel2:#1a2340; --text:#e9eefc; --muted:#9fb0da; --ok:#33d17a; --err:#ff6b6b; --acc:#7c9cff; --line:#2a3760; }
+      *{box-sizing:border-box}
+      body{margin:0;background:radial-gradient(1200px 800px at 0% -10%, #1b2550 0%, var(--bg) 50%);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif}
+      .wrap{max-width:1100px;margin:28px auto;padding:0 16px}
+      .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+      .grid{display:grid;grid-template-columns:1fr;gap:14px} @media (min-width:980px){.grid{grid-template-columns:1fr 1fr}}
+      .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+      h1,h3{margin:0 0 10px} h1{font-size:30px} h3{font-size:20px}
+      label{font-size:12px;color:var(--muted);display:block;margin-top:8px}
+      input,textarea,select,button{width:100%;border-radius:10px;border:1px solid var(--line);background:#0f1730;color:var(--text);padding:10px 12px;margin-top:6px}
+      textarea{min-height:120px;resize:vertical}
+      .inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+      .inline button{width:auto;cursor:pointer}
+      .primary{background:var(--acc);color:#0b1020;border:none;font-weight:700}
+      .ghost{background:transparent}
+      .ok{color:var(--ok)} .err{color:var(--err)} .muted{color:var(--muted);font-size:13px}
+      table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
+      th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+      th{color:var(--muted);font-weight:600}
+      .badge{padding:2px 8px;border-radius:999px;font-size:12px;display:inline-block;background:#163726;color:#8ff0b3}
+      .timeline{display:grid;gap:8px;margin-top:8px}
+      .node{display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#0f1730}
+      .dot{width:12px;height:12px;border-radius:50%;background:#41568d}
+      .dot.done{background:#33d17a}
+      .toast{position:fixed;right:16px;bottom:16px;min-width:250px;padding:12px 14px;border-radius:10px;background:#101932;border:1px solid var(--line);display:none}
+      .toast.show{display:block}
     </style>
   </head>
   <body>
     <div class="wrap">
       <div class="top">
-        <h1>Blog</h1>
-        <div class="muted">Powered by Mission Control</div>
+        <h1>Client Portal</h1>
+        <div class="muted">API: <code>https://api.stuff187.com</code></div>
       </div>
-      <p id="status" class="muted">Loading posts...</p>
-      <div id="list"></div>
+
+      <div class="grid">
+        <section class="card">
+          <h3>Auth</h3>
+          <label>Email</label><input id="email" value="client@stuff187.com" />
+          <label>Password</label><input id="password" type="password" placeholder="••••••••" />
+          <div class="inline" style="margin-top:10px">
+            <button id="loginBtn" class="primary">Login</button>
+            <button id="whoBtn" class="ghost">Who am I</button>
+            <button id="logoutBtn" class="ghost">Logout</button>
+          </div>
+          <p id="authMsg" class="muted"></p>
+        </section>
+
+        <section class="card">
+          <h3>New Request Form</h3>
+          <label>Project title</label><input id="title" placeholder="Landing page for ..." />
+          <label>Package</label>
+          <select id="package">
+            <option value="starter">starter</option>
+            <option value="growth">growth</option>
+            <option value="premium">premium</option>
+          </select>
+          <label>Brief (English)</label><textarea id="briefEn" placeholder="Target audience, goals, CTA..."></textarea>
+          <label>Brief (Arabic)</label><textarea id="briefAr" placeholder="الجمهور المستهدف، الأهداف، الدعوة إلى الإجراء..."></textarea>
+          <div class="inline" style="margin-top:10px">
+            <button id="submitRequestBtn" class="primary">Submit Request</button>
+            <button id="refreshProjectsBtn" class="ghost">Refresh Timeline</button>
+          </div>
+          <p id="requestMsg" class="muted"></p>
+        </section>
+      </div>
+
+      <section class="card">
+        <h3>Clarification Inbox</h3>
+        <div class="inline">
+          <label style="margin:0">Project</label>
+          <select id="clarificationProject" style="max-width:240px"></select>
+          <button id="loadClarificationsBtn" class="ghost">Load Questions</button>
+          <button id="submitAnswersBtn" class="primary">Submit Answers</button>
+        </div>
+        <div id="clarificationList" class="timeline"></div>
+        <p id="clarificationMsg" class="muted"></p>
+      </section>
+
+      <section class="card">
+        <h3>Project Timeline / Status</h3>
+        <table>
+          <thead><tr><th>ID</th><th>Title</th><th>Package</th><th>Status</th><th>Updated</th></tr></thead>
+          <tbody id="projectRows"><tr><td colspan="5" class="muted">Login to load your projects.</td></tr></tbody>
+        </table>
+        <div id="projectTimeline" class="timeline"></div>
+      </section>
     </div>
+
+    <div id="toast" class="toast"></div>
+
     <script>
       const API = 'https://api.stuff187.com';
+      const $ = id => document.getElementById(id);
+      const token = () => localStorage.getItem('client_token') || '';
+      const setToken = v => localStorage.setItem('client_token', v);
+      const clearToken = () => localStorage.removeItem('client_token');
+      const dt = d => { try { return new Date(d).toLocaleString(); } catch { return d || '' }};
       const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#039;');
-      const fmt = d => { try { return new Date(d).toLocaleString(); } catch { return d || ''; } };
-      const stripMd = s => String(s || '')
-        .replace(/```[\s\S]*?```/g, ' ')
-        .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
-        .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
-        .replace(/[#>*_`-]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
 
-      async function load(){
-        const status=document.getElementById('status'); const list=document.getElementById('list');
+      const TIMELINE_STEPS = [
+        'submitted','deposit_pending','deposit_paid','clarification_needed','ready_for_design','design_generated',
+        'awaiting_admin_design_approval','design_approved','build_generated','awaiting_admin_deploy_approval',
+        'deploy_approved','final_payment_pending','final_payment_paid','delivered'
+      ];
+
+      function toast(text, ok=true){ const t=$('toast'); t.textContent=text; t.style.borderColor=ok?'#2f6f4c':'#7a3047'; t.className='toast show'; setTimeout(()=>t.className='toast', 2200); }
+      function setMsg(id,text,ok=true){ const el=$(id); el.textContent=text; el.className=ok?'ok':'err'; }
+      function fmtErr(d,s){ return typeof d?.detail==='string' ? d.detail : `HTTP ${s}`; }
+
+      async function api(path, options={}) {
+        const headers = { ...(options.headers || {}) };
+        if (token()) headers.Authorization = `Bearer ${token()}`;
+        const res = await fetch(`${API}${path}`, { ...options, headers });
+        let data = null; try { data = await res.json(); } catch {}
+        if (!res.ok) throw new Error(fmtErr(data, res.status));
+        return data;
+      }
+
+      function renderTimeline(state='submitted') {
+        const currentIndex = TIMELINE_STEPS.indexOf(state);
+        $('projectTimeline').innerHTML = TIMELINE_STEPS.map((step, i) => `
+          <div class="node"><span class="dot ${i <= currentIndex ? 'done' : ''}"></span><span>${esc(step)}</span></div>
+        `).join('');
+      }
+
+      async function refreshProjects(){
+        const rows = $('projectRows');
+        const picker = $('clarificationProject');
+        rows.innerHTML = '<tr><td colspan="5" class="muted">Loading…</td></tr>';
+        picker.innerHTML = '';
+        if (!token()) { rows.innerHTML = '<tr><td colspan="5" class="muted">Login to load your projects.</td></tr>'; return; }
         try {
-          const res = await fetch(`${API}/posts?skip=0&limit=20`);
-          if(!res.ok) throw new Error(`HTTP ${res.status}`);
-          const posts = await res.json();
-          status.textContent = `${posts.length} published post(s)`;
-          list.innerHTML = posts.map(p => `
-            <article class="post">
-              <h2><a href="./post.html?slug=${encodeURIComponent(p.slug)}">${esc(p.title)}</a></h2>
-              <div class="muted">Updated: ${esc(fmt(p.updated_at || p.created_at))}</div>
-              <p>${esc(stripMd(p.content).slice(0,220))}${stripMd(p.content).length>220?'...':''}</p>
-              <a href="./post.html?slug=${encodeURIComponent(p.slug)}">Read more →</a>
-            </article>
+          const data = await api('/projects/requests');
+          if (!data.length) { rows.innerHTML = '<tr><td colspan="5" class="muted">No requests yet.</td></tr>'; return; }
+          rows.innerHTML = data.map(p => `
+            <tr data-project-id="${p.id}">
+              <td>#${p.id}</td><td>${esc(p.title)}</td><td>${esc(p.package)}</td><td><span class="badge">${esc(p.state)}</span></td><td>${esc(dt(p.updated_at || p.created_at))}</td>
+            </tr>
           `).join('');
-        } catch(e){
-          status.innerHTML = `<span class="error">Failed to load posts: ${esc(e.message)}</span>`;
+          picker.innerHTML = data.map(p => `<option value="${p.id}">#${p.id} · ${esc(p.title)}</option>`).join('');
+          renderTimeline(data[0].state);
+        } catch (e) {
+          rows.innerHTML = `<tr><td colspan="5" class="err">${esc(e.message)}</td></tr>`;
         }
       }
-      load();
+
+      async function loadClarifications() {
+        const projectId = Number($('clarificationProject').value);
+        if (!projectId) return;
+        try {
+          const data = await api(`/projects/${projectId}/clarification/start`, { method: 'POST' });
+          $('clarificationList').innerHTML = data.questions.length ? data.questions.map(q => `
+            <div class="node">
+              <div style="width:100%">
+                <div><strong>${esc(q.question_text)}</strong></div>
+                <input data-qid="${q.id}" placeholder="Type answer..." value="${esc(q.answer_text || '')}" />
+              </div>
+            </div>
+          `).join('') : '<p class="muted">No clarification questions pending.</p>';
+          setMsg('clarificationMsg', `Loaded ${data.questions.length} question(s). State: ${data.state}`);
+          renderTimeline(data.state);
+        } catch (e) {
+          setMsg('clarificationMsg', e.message, false);
+        }
+      }
+
+      $('loginBtn').onclick = async () => {
+        try {
+          const body = new URLSearchParams({ username: $('email').value.trim(), password: $('password').value });
+          const data = await api('/auth/login', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
+          setToken(data.access_token);
+          setMsg('authMsg','Login success.');
+          toast('Logged in');
+          refreshProjects();
+        } catch (e) { setMsg('authMsg', `Login failed: ${e.message}`, false); }
+      };
+      $('whoBtn').onclick = async () => { if (!token()) return setMsg('authMsg','No token stored.',false); try { const me = await api('/auth/me'); setMsg('authMsg', `Logged in as ${me.email} (${me.role})`); } catch (e) { setMsg('authMsg',`Token check failed: ${e.message}`,false); }};
+      $('logoutBtn').onclick = () => { clearToken(); setMsg('authMsg','Logged out.'); refreshProjects(); };
+
+      $('submitRequestBtn').onclick = async () => {
+        try {
+          const payload = {
+            title: $('title').value.trim(),
+            package: $('package').value,
+            brief_en: $('briefEn').value,
+            brief_ar: $('briefAr').value,
+          };
+          const created = await api('/projects/requests', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+          setMsg('requestMsg', `Request #${created.id} submitted with state ${created.state}.`);
+          toast('Request submitted');
+          refreshProjects();
+        } catch (e) {
+          setMsg('requestMsg', `Request failed: ${e.message}`, false);
+        }
+      };
+
+      $('refreshProjectsBtn').onclick = refreshProjects;
+      $('loadClarificationsBtn').onclick = loadClarifications;
+
+      $('submitAnswersBtn').onclick = async () => {
+        const projectId = Number($('clarificationProject').value);
+        if (!projectId) return;
+        const answers = [...$('clarificationList').querySelectorAll('input[data-qid]')]
+          .map(el => ({ question_id: Number(el.dataset.qid), answer_text: el.value.trim() }))
+          .filter(a => a.answer_text);
+        try {
+          const data = await api(`/projects/${projectId}/clarification/answers`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers })
+          });
+          setMsg('clarificationMsg', `Answers saved. Pending: ${data.pending_questions.length}. State: ${data.state}`);
+          toast('Clarification answers submitted');
+          refreshProjects();
+          loadClarifications();
+        } catch (e) {
+          setMsg('clarificationMsg', e.message, false);
+        }
+      };
+
+      $('projectRows').addEventListener('click', (e) => {
+        const row = e.target.closest('tr[data-project-id]');
+        if (!row) return;
+        const projectId = row.dataset.projectId;
+        $('clarificationProject').value = projectId;
+      });
+
+      refreshProjects();
+      renderTimeline('submitted');
     </script>
   </body>
 </html>
