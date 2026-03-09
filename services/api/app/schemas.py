@@ -107,3 +107,14 @@ class ProjectRequestOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class DepositSessionCreate(BaseModel):
+    project_id: int
+
+
+class DepositSessionOut(BaseModel):
+    project_id: int
+    state: str
+    session_id: str
+    checkout_url: str

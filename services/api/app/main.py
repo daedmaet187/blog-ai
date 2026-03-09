@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import auth, posts, media, projects
+from .routers import auth, posts, media, projects, payments
 from .moderation import routes as moderation
 
 app = FastAPI(title="Blog Mission Control API", version="0.2.0")
@@ -33,4 +33,5 @@ app.include_router(auth.router)
 app.include_router(posts.router)
 app.include_router(media.router)
 app.include_router(projects.router)
+app.include_router(payments.router)
 app.include_router(moderation.router)
