@@ -24,7 +24,7 @@ locals {
   tags = {
     Project     = local.project
     Environment = local.env
-    ManagedBy   = "terraform"
+    ManagedBy   = "opentofu"
   }
 }
 

@@ -11,7 +11,7 @@
 - Web and admin skeleton with routing/layout.
 
 ## Day 5-6: Infra + Delivery
-- Terraform dev environment.
+- OpenTofu dev environment.
 - GitHub Actions for CI (lint/test/build).
 - Docker + ECR + ECS deploy pipeline (dev).
 

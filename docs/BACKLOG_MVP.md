@@ -32,7 +32,7 @@
 - [ ] Profile/settings shell
 
 ## Epic 6: Platform/Infra
-- [ ] Terraform dev baseline (VPC, ECS, RDS, Redis, ECR)
+- [ ] OpenTofu dev baseline (VPC, ECS, RDS, Redis, ECR)
 - [ ] CI pipeline (lint/test/build)
 - [ ] CD pipeline to dev ECS
 - [ ] Observability baseline (CloudWatch + Sentry)

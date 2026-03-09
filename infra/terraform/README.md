@@ -1,4 +1,4 @@
-# Terraform (AWS)
+# OpenTofu (AWS)
 
 ## Dev bootstrap (OpenTofu)
 ```bash
