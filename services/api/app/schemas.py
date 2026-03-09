@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -45,3 +46,25 @@ class PostOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ModerationReasonCode(str, Enum):
+    BLOCKED_WORD = "BLOCKED_WORD"
+    TOO_MANY_LINKS = "TOO_MANY_LINKS"
+    DUPLICATE_CONTENT = "DUPLICATE_CONTENT"
+    TOO_MANY_MEDIA = "TOO_MANY_MEDIA"
+
+
+class ModerationDecision(str, Enum):
+    PASS = "PASS"
+    FLAG = "FLAG"
+
+
+class ModerationResult(BaseModel):
+    decision: ModerationDecision
+    reasons: list[ModerationReasonCode] = Field(default_factory=list)
+
+
+class PublishPostResponse(BaseModel):
+    post: PostOut
+    moderation: ModerationResult

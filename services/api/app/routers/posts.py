@@ -4,7 +4,14 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from ..deps import get_db, current_user
 from ..models import Post, User
-from ..schemas import PostCreate, PostUpdate, PostOut
+from ..schemas import (
+    PostCreate,
+    PostUpdate,
+    PostOut,
+    PublishPostResponse,
+    ModerationResult,
+    ModerationDecision,
+)
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -86,6 +93,30 @@ def update_post(post_id: int, payload: PostUpdate, user: User = Depends(current_
     db.commit()
     db.refresh(post)
     return post
+
+
+@router.post(
+    "/{post_id}/publish",
+    response_model=PublishPostResponse,
+    description="Publish a post. Allowed roles: admin, editor.",
+    responses={403: {"description": "Forbidden for non-editor roles"}},
+)
+def publish_post(post_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    _ensure_editor(user)
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    post.status = "published"
+    post.updated_at = datetime.utcnow()
+    db.add(post)
+    db.commit()
+    db.refresh(post)
+
+    return PublishPostResponse(
+        post=post,
+        moderation=ModerationResult(decision=ModerationDecision.PASS, reasons=[]),
+    )
 
 
 @router.delete("/{post_id}")
