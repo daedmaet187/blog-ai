@@ -37,6 +37,9 @@
       th{color:var(--muted);font-weight:600}
       .badge{padding:2px 8px;border-radius:999px;font-size:12px;display:inline-block}
       .b-pub{background:#163726;color:#8ff0b3}.b-draft{background:#423315;color:#ffcb6b}
+      .b-pending{background:#423315;color:#ffcb6b}.b-approved{background:#163726;color:#8ff0b3}.b-rejected{background:#4b1f2b;color:#ff8fa3}
+      .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#0f1730;border-radius:999px;padding:4px 8px;font-size:12px;margin:2px 4px 2px 0}
+      .reason-code{color:var(--acc);font-weight:600}
       .toast{position:fixed;right:16px;bottom:16px;min-width:250px;padding:12px 14px;border-radius:10px;background:#101932;border:1px solid var(--line);display:none}
       .toast.show{display:block}
     </style>
@@ -118,6 +121,27 @@
           </table>
         </div>
       </section>
+
+      <section class="card">
+        <div class="inline" style="justify-content:space-between;margin-bottom:8px">
+          <h3 style="margin:0">Moderation Queue</h3>
+          <div class="inline">
+            <select id="modStatusFilter" style="width:140px">
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <button id="modRefreshBtn" class="ghost">Refresh</button>
+          </div>
+        </div>
+
+        <div style="overflow:auto">
+          <table>
+            <thead><tr><th>Item</th><th>Post</th><th>Reasons</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead>
+            <tbody id="modRows"><tr><td colspan="6" class="muted">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
     </div>
 
     <div id="toast" class="toast"></div>
@@ -125,6 +149,13 @@
     <script>
       const API = 'https://api.stuff187.com';
       let editingId = null;
+
+      const REASON_LABELS = {
+        BLOCKED_WORD: 'Blocked term detected',
+        TOO_MANY_LINKS: 'Too many outbound links',
+        DUPLICATE_CONTENT: 'Potential duplicate content',
+        TOO_MANY_MEDIA: 'Too many embedded media items',
+      };
 
       const $ = id => document.getElementById(id);
       const token = () => localStorage.getItem('admin_token') || '';
@@ -277,6 +308,7 @@
           setMsg('authMsg','Login success.');
           toast('Logged in');
           refreshPosts();
+          refreshModerationQueue();
         } catch (e) { setMsg('authMsg', `Login failed: ${e.message}`, false); }
       };
 
@@ -286,7 +318,7 @@
         catch (e) { setMsg('authMsg',`Token check failed: ${e.message}`,false); }
       };
 
-      $('logoutBtn').onclick = () => { clearToken(); setMsg('authMsg','Logged out.'); toast('Logged out'); };
+      $('logoutBtn').onclick = () => { clearToken(); setMsg('authMsg','Logged out.'); toast('Logged out'); refreshPosts(); refreshModerationQueue(); };
 
       $('saveBtn').onclick = async () => {
         if (!token()) return setMsg('editorMsg','Please login first.',false);
@@ -336,6 +368,58 @@
         if (!confirm(`Delete post #${id}? This cannot be undone.`)) return;
         try { await api(`/posts/${id}`, { method:'DELETE' }); toast(`Post #${id} deleted`); if (editingId===id) resetForm(); refreshPosts(); }
         catch (e) { toast(e.message, false); }
+      }
+
+      function renderReasonChips(reasons = []) {
+        if (!reasons.length) return '<span class="muted">None</span>';
+        return reasons.map((code) => {
+          const safeCode = escapeHtml(String(code || 'UNKNOWN'));
+          const label = escapeHtml(REASON_LABELS[code] || 'Unknown moderation reason');
+          return `<span class="chip"><span class="reason-code">${safeCode}</span><span>${label}</span></span>`;
+        }).join('');
+      }
+
+      async function overrideModeration(itemId, action){
+        const note = prompt(`${action === 'approve' ? 'Approve' : 'Reject'} item #${itemId}. Optional note:`,'') ?? '';
+        try {
+          await api(`/moderation/queue/${itemId}/override`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, note: note.trim() || null }),
+          });
+          toast(`Moderation item #${itemId} ${action}d`);
+          refreshModerationQueue();
+        } catch (e) {
+          toast(e.message, false);
+        }
+      }
+
+      async function refreshModerationQueue(){
+        const rows = $('modRows');
+        rows.innerHTML = '<tr><td colspan="6" class="muted">Loading…</td></tr>';
+        if (!token()) { rows.innerHTML = '<tr><td colspan="6" class="muted">Login to view moderation queue.</td></tr>'; return; }
+        try {
+          const status = encodeURIComponent($('modStatusFilter').value || 'pending');
+          const data = await api(`/moderation/queue?status=${status}`);
+          if (!data.length) { rows.innerHTML = '<tr><td colspan="6" class="muted">No moderation items.</td></tr>'; return; }
+          rows.innerHTML = data.map(item => `
+            <tr>
+              <td>#${item.id}</td>
+              <td>#${item.post_id}</td>
+              <td>${renderReasonChips(item.reasons || [])}</td>
+              <td><span class="badge b-${escapeHtml(item.status)}">${escapeHtml(item.status)}</span></td>
+              <td>${escapeHtml(dt(item.updated_at || item.created_at))}</td>
+              <td>
+                <div class="inline">
+                  <button class="ghost" data-mod-action="approve" data-id="${item.id}" ${item.status !== 'pending' ? 'disabled' : ''}>Approve</button>
+                  <button class="danger" data-mod-action="reject" data-id="${item.id}" ${item.status !== 'pending' ? 'disabled' : ''}>Reject</button>
+                </div>
+              </td>
+            </tr>
+          `).join('');
+        } catch (e) {
+          rows.innerHTML = `<tr><td colspan="6" class="err">${escapeHtml(e.message)}</td></tr>`;
+        }
       }
 
       function loadIntoForm(p){
@@ -392,10 +476,22 @@
         if (action === 'delete') return deletePost(Number(id));
       });
 
+      $('modRows').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-mod-action]');
+        if (!btn) return;
+        const action = btn.dataset.modAction;
+        const id = Number(btn.dataset.id);
+        if (!id || !['approve', 'reject'].includes(action)) return;
+        overrideModeration(id, action);
+      });
+
       $('refreshBtn').onclick = refreshPosts;
+      $('modRefreshBtn').onclick = refreshModerationQueue;
       $('q').addEventListener('keydown', e => { if (e.key === 'Enter') refreshPosts(); });
       $('statusFilter').onchange = refreshPosts;
+      $('modStatusFilter').onchange = refreshModerationQueue;
       refreshPosts();
+      refreshModerationQueue();
     </script>
   </body>
 </html>
