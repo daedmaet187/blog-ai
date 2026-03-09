@@ -2,7 +2,7 @@
 
 ## Dev bootstrap (OpenTofu)
 ```bash
-cd infra/terraform/envs/dev
+cd infra/opentofu/envs/dev
 cp terraform.tfvars.example terraform.tfvars
 # edit terraform.tfvars (db_password)
 tofu init

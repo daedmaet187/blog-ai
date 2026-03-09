@@ -24,7 +24,7 @@ Monorepo for:
 - `apps/admin_dashboard` - Admin web app
 - `services/api` - Backend API
 - `packages/shared` - Shared contracts/types
-- `infra/terraform` - AWS IaC (OpenTofu configs; legacy folder name)
+- `infra/opentofu` - AWS IaC (OpenTofu configs; legacy folder name)
 - `docs` - Product and technical docs
 
 ## Next steps

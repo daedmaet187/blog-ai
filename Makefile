@@ -7,10 +7,10 @@ api-docker-build:
 	docker build -t blog-api:local services/api
 
 tofu-init:
-	cd infra/terraform/envs/dev && tofu init
+	cd infra/opentofu/envs/dev && tofu init
 
 tofu-plan:
-	cd infra/terraform/envs/dev && tofu plan
+	cd infra/opentofu/envs/dev && tofu plan
 
 tofu-apply:
-	cd infra/terraform/envs/dev && tofu apply
+	cd infra/opentofu/envs/dev && tofu apply

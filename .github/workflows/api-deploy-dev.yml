@@ -6,7 +6,7 @@ on:
     branches: ["main"]
     paths:
       - "services/api/**"
-      - "infra/terraform/**"
+      - "infra/opentofu/**"
       - ".github/workflows/api-deploy-dev.yml"
 
 env:

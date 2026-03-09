@@ -6,7 +6,7 @@
 - Configure OIDC IAM role trust for GitHub Actions.
 
 ## 2) OpenTofu apply (dev)
-- `cd infra/terraform/envs/dev` (OpenTofu config path; folder name kept for compatibility)
+- `cd infra/opentofu/envs/dev` (OpenTofu config path; folder name kept for compatibility)
 - `cp terraform.tfvars.example terraform.tfvars`
 - set strong `db_password`
 - `tofu init && tofu apply`

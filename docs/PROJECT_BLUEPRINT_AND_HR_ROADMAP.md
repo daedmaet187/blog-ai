@@ -87,7 +87,7 @@ apps/
 services/
   api/
 infra/
-  terraform/   # OpenTofu configs (legacy folder name)
+  opentofu/
 docs/
   runbooks, ADRs, blueprints
 .github/workflows/
