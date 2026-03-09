@@ -120,6 +120,17 @@ class DepositSessionOut(BaseModel):
     checkout_url: str
 
 
+class FinalPaymentSessionCreate(BaseModel):
+    project_id: int
+
+
+class FinalPaymentSessionOut(BaseModel):
+    project_id: int
+    state: str
+    session_id: str
+    checkout_url: str
+
+
 class ClarificationQuestionOut(BaseModel):
     id: int
     project_id: int
@@ -184,3 +195,10 @@ class AdminDeployDecisionOut(BaseModel):
     state: str
     deploy_status: str
     preview_url: str
+
+
+class DomainMappingOut(BaseModel):
+    project_id: int
+    state: str
+    deploy_status: str
+    domain: str

@@ -16,6 +16,7 @@ from ..schemas import (
     BuildGenerateOut,
     DeploySubmitOut,
     DesignBriefGenerateOut,
+    DomainMappingOut,
 )
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -296,4 +297,38 @@ def reject_project_deploy(
         state=project.state,
         deploy_status=deploy_request.status,
         preview_url=deploy_request.preview_url,
+    )
+
+
+@router.post("/projects/{project_id}/deploy/domain-map", response_model=DomainMappingOut)
+def map_project_domain(
+    project_id: int,
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    _require_design_approver(user)
+
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    deploy_request = db.query(ProjectDeployRequest).filter(ProjectDeployRequest.project_id == project.id).first()
+    if not deploy_request:
+        raise HTTPException(status_code=409, detail="Deploy request not found")
+
+    try:
+        domain = DeployService().map_domain(project=project, deploy_request=deploy_request)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    db.add(deploy_request)
+    db.commit()
+    db.refresh(project)
+    db.refresh(deploy_request)
+
+    return DomainMappingOut(
+        project_id=project.id,
+        state=project.state,
+        deploy_status=deploy_request.status,
+        domain=domain,
     )

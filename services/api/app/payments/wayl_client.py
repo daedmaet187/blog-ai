@@ -22,12 +22,33 @@ class WaylClient:
             {
                 "reference": f"project-{project_id}",
                 "description": title,
-                "metadata": {"project_id": project_id, "package": package},
+                "metadata": {"project_id": project_id, "package": package, "payment_stage": "deposit"},
             }
         ).encode("utf-8")
 
         req = urllib_request.Request(
             f"{self.base_url}/v1/deposits/sessions",
+            data=payload,
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        with urllib_request.urlopen(req, timeout=10) as response:
+            return json.loads(response.read().decode("utf-8"))
+
+    def create_final_payment_session(self, *, project_id: int, title: str, package: str) -> dict[str, Any]:
+        payload = json.dumps(
+            {
+                "reference": f"project-{project_id}-final",
+                "description": f"Final payment for {title}",
+                "metadata": {"project_id": project_id, "package": package, "payment_stage": "final"},
+            }
+        ).encode("utf-8")
+
+        req = urllib_request.Request(
+            f"{self.base_url}/v1/final-payments/sessions",
             data=payload,
             headers={
                 "Authorization": f"Bearer {self.api_key}",
