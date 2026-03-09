@@ -150,3 +150,15 @@ class ClarificationAnswersSubmitOut(BaseModel):
     project_id: int
     state: str
     pending_questions: list[ClarificationQuestionOut]
+
+
+class DesignBriefGenerateOut(BaseModel):
+    project_id: int
+    state: str
+    brief_id: int
+    brief_text: str
+
+
+class AdminDesignDecisionOut(BaseModel):
+    project_id: int
+    state: str
