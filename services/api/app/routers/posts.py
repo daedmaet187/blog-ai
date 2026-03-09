@@ -16,8 +16,11 @@ from ..schemas import (
 router = APIRouter(prefix="/posts", tags=["posts"])
 
 
+AUTHORING_ROLES = {"admin", "editor"}
+
+
 def _ensure_editor(user: User):
-    if user.role not in ["admin", "editor"]:
+    if (user.role or "").lower() not in AUTHORING_ROLES:
         raise HTTPException(status_code=403, detail="Forbidden")
 
 
