@@ -170,3 +170,17 @@ class BuildGenerateOut(BaseModel):
     repo_full_name: str
     repo_url: str
     generated_files: list[str]
+
+
+class DeploySubmitOut(BaseModel):
+    project_id: int
+    state: str
+    deploy_status: str
+    preview_url: str
+
+
+class AdminDeployDecisionOut(BaseModel):
+    project_id: int
+    state: str
+    deploy_status: str
+    preview_url: str

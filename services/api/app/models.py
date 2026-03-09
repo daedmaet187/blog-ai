@@ -102,3 +102,16 @@ class ProjectRepository(Base):
     generated_files: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ProjectDeployRequest(Base):
+    __tablename__ = "project_deploy_requests"
+    __table_args__ = (UniqueConstraint("project_id", name="uq_project_deploy_request_project_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), index=True)
+    preview_url: Mapped[str] = mapped_column(String(500))
+    status: Mapped[str] = mapped_column(String(64), default="preview_ready", index=True)
+    submitted_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
