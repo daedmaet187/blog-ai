@@ -64,3 +64,15 @@ class Project(Base):
     state: Mapped[str] = mapped_column(String(64), default="submitted", index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ProjectClarification(Base):
+    __tablename__ = "project_clarifications"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), index=True)
+    question_key: Mapped[str] = mapped_column(String(50), index=True)
+    question_text: Mapped[str] = mapped_column(Text)
+    answer_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

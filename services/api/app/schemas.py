@@ -118,3 +118,35 @@ class DepositSessionOut(BaseModel):
     state: str
     session_id: str
     checkout_url: str
+
+
+class ClarificationQuestionOut(BaseModel):
+    id: int
+    project_id: int
+    question_key: str
+    question_text: str
+    answer_text: str | None
+
+    class Config:
+        from_attributes = True
+
+
+class ClarificationStartOut(BaseModel):
+    project_id: int
+    state: str
+    questions: list[ClarificationQuestionOut]
+
+
+class ClarificationAnswerIn(BaseModel):
+    question_id: int
+    answer_text: str = Field(min_length=1)
+
+
+class ClarificationAnswersSubmitIn(BaseModel):
+    answers: list[ClarificationAnswerIn]
+
+
+class ClarificationAnswersSubmitOut(BaseModel):
+    project_id: int
+    state: str
+    pending_questions: list[ClarificationQuestionOut]
