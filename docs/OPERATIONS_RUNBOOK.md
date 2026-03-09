@@ -16,6 +16,28 @@ This runbook covers release/operations for AI Landing V1 flows:
 - Web: `https://app.stuff187.com`
 - Admin: `https://admin.stuff187.com`
 
+## Production setup (first pass)
+### 1) Secrets/env
+- Copy `services/api/.env.example` into your secret manager (SSM/Secrets Manager).
+- Required minimum keys:
+  - `DATABASE_URL`, `JWT_SECRET`
+  - `WAYL_API_KEY`, `WAYL_WEBHOOK_SECRET`, `WAYL_BASE_URL`
+  - `GITHUB_TOKEN`, `GITHUB_OWNER`
+- Run preflight locally/in CI:
+```bash
+make api-preflight
+```
+
+### 2) DB migration
+```bash
+export DATABASE_URL='postgresql://...'
+make api-migrate
+```
+
+### 3) Worker setup note
+Current V1 code paths are synchronous/deterministic and do not yet include a dedicated queue worker process.
+When async jobs are introduced, add explicit worker service + health checks here before production cutover.
+
 ## Pre-release verification (required)
 Run from repo root unless noted.
 
