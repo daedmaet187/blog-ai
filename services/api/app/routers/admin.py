@@ -2,10 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..ai.design_brief import generate_design_brief_for_project
+from ..codegen.template_engine import generate_template
 from ..deps import current_user, get_db
-from ..models import Project, ProjectDesignBrief, User
+from ..models import Project, ProjectDesignBrief, ProjectRepository, User
 from ..project_state import ProjectState, ensure_transition
-from ..schemas import AdminDesignDecisionOut, DesignBriefGenerateOut
+from ..repos.github_provisioner import GitHubProvisioner
+from ..schemas import AdminDesignDecisionOut, BuildGenerateOut, DesignBriefGenerateOut
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -114,3 +116,66 @@ def reject_project_design(
     db.refresh(project)
 
     return AdminDesignDecisionOut(project_id=project.id, state=project.state)
+
+
+@router.post("/projects/{project_id}/build/generate", response_model=BuildGenerateOut)
+def generate_project_build(
+    project_id: int,
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    _require_design_approver(user)
+
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    current_state = ProjectState(project.state)
+    if current_state != ProjectState.DESIGN_APPROVED:
+        raise HTTPException(status_code=409, detail="Project is not approved for build generation")
+
+    repo = GitHubProvisioner().provision_for_project(
+        client_user_id=project.client_user_id,
+        project_id=project.id,
+        title=project.title,
+    )
+    generated = generate_template(
+        package=project.package,
+        title=project.title,
+        brief_en=project.brief_en,
+        brief_ar=project.brief_ar,
+    )
+    generated_paths = sorted(generated.files.keys())
+
+    existing = db.query(ProjectRepository).filter(ProjectRepository.project_id == project.id).first()
+    if existing:
+        existing.repo_full_name = repo.full_name
+        existing.repo_url = repo.html_url
+        existing.clone_url = repo.clone_url
+        existing.default_branch = repo.default_branch
+        existing.generated_files = "\n".join(generated_paths)
+        record = existing
+    else:
+        record = ProjectRepository(
+            project_id=project.id,
+            repo_full_name=repo.full_name,
+            repo_url=repo.html_url,
+            clone_url=repo.clone_url,
+            default_branch=repo.default_branch,
+            generated_files="\n".join(generated_paths),
+        )
+
+    project.state = ensure_transition(current_state, ProjectState.BUILD_GENERATED).value
+
+    db.add(record)
+    db.add(project)
+    db.commit()
+    db.refresh(project)
+
+    return BuildGenerateOut(
+        project_id=project.id,
+        state=project.state,
+        repo_full_name=repo.full_name,
+        repo_url=repo.html_url,
+        generated_files=generated_paths,
+    )

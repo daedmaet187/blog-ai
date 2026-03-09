@@ -162,3 +162,11 @@ class DesignBriefGenerateOut(BaseModel):
 class AdminDesignDecisionOut(BaseModel):
     project_id: int
     state: str
+
+
+class BuildGenerateOut(BaseModel):
+    project_id: int
+    state: str
+    repo_full_name: str
+    repo_url: str
+    generated_files: list[str]

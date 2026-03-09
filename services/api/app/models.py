@@ -87,3 +87,18 @@ class ProjectDesignBrief(Base):
     brief_text: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ProjectRepository(Base):
+    __tablename__ = "project_repositories"
+    __table_args__ = (UniqueConstraint("project_id", name="uq_project_repository_project_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), index=True)
+    repo_full_name: Mapped[str] = mapped_column(String(255))
+    repo_url: Mapped[str] = mapped_column(String(500))
+    clone_url: Mapped[str] = mapped_column(String(500))
+    default_branch: Mapped[str] = mapped_column(String(50), default="main")
+    generated_files: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
