@@ -15,4 +15,10 @@ variable "secrets" {
   type    = map(string)
   default = {}
 }
+
+variable "task_policy_json" {
+  type    = string
+  default = null
+}
+
 variable "tags" { type = map(string) }

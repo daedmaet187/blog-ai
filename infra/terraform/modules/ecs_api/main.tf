@@ -116,6 +116,26 @@ resource "aws_iam_role" "task_execution" {
   })
 }
 
+resource "aws_iam_role" "task_runtime" {
+  name = "${var.name}-ecs-task-runtime"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect = "Allow",
+      Principal = { Service = "ecs-tasks.amazonaws.com" },
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "task_runtime_custom" {
+  count  = var.task_policy_json == null ? 0 : 1
+  name   = "${var.name}-task-runtime-custom"
+  role   = aws_iam_role.task_runtime.id
+  policy = var.task_policy_json
+}
+
 resource "aws_iam_role_policy_attachment" "task_execution" {
   role       = aws_iam_role.task_execution.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
@@ -149,6 +169,7 @@ resource "aws_ecs_task_definition" "api" {
   cpu                      = "256"
   memory                   = "512"
   execution_role_arn       = aws_iam_role.task_execution.arn
+  task_role_arn            = aws_iam_role.task_runtime.arn
 
   container_definitions = jsonencode([
     {
@@ -179,11 +200,13 @@ resource "aws_ecs_task_definition" "api" {
 }
 
 resource "aws_ecs_service" "api" {
-  name            = "${var.name}-api"
-  cluster         = aws_ecs_cluster.this.id
-  task_definition = aws_ecs_task_definition.api.arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
+  name                               = "${var.name}-api"
+  cluster                            = aws_ecs_cluster.this.id
+  task_definition                    = aws_ecs_task_definition.api.arn
+  desired_count                      = 1
+  launch_type                        = "FARGATE"
+  deployment_minimum_healthy_percent = 0
+  deployment_maximum_percent         = 100
 
   network_configuration {
     assign_public_ip = false

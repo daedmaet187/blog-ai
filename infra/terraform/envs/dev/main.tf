@@ -64,6 +64,16 @@ module "ecs_api" {
     DATABASE_URL = aws_ssm_parameter.database_url.arn
     REDIS_URL    = aws_ssm_parameter.redis_url.arn
   }
+  task_policy_json = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = ["s3:PutObject", "s3:GetObject"]
+        Resource = ["${aws_s3_bucket.media.arn}/*"]
+      }
+    ]
+  })
   tags = local.tags
 }
 
