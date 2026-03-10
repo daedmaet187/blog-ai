@@ -56,8 +56,8 @@ def test_build_generation_persists_repo_metadata_and_package_templates(monkeypat
         project = _make_project(db, client.id, package="growth")
 
         def _fake_create_repository(self, *, repo_name: str, description: str):
-            assert "client-" in repo_name
-            assert f"project-{project.id}" in repo_name
+            assert f"p{project.id}" in repo_name
+            assert "growth-launch" in repo_name
             assert "Growth Launch" in description
             return {
                 "full_name": f"sandbox/{repo_name}",
