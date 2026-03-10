@@ -1,0 +1,8 @@
+project_slug = "siteforge-platform"
+environment  = "dev"
+aws_region   = "eu-central-1"
+
+db_password = "CHANGE_ME_STRONG_PASSWORD"
+
+client_app_origin = "https://platform.stuff187.com"
+admin_app_origin  = "https://admin-platform.stuff187.com"
